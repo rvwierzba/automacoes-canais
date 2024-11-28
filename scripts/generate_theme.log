@@ -1,0 +1,9 @@
+2024-11-28 09:38:37,830 - INFO - Número de temas já usados: 2
+2024-11-28 09:38:39,281 - INFO - Tema gerado: The Unexpected Physics Of Slime Mold Navigation
+2024-11-28 09:38:39,281 - INFO - Tema 'The Unexpected Physics Of Slime Mold Navigation' salvo em 'C:\dev\automacoes-canais\data\temas_usados.txt'.
+2024-11-28 09:38:39,282 - INFO - Tema 'The Unexpected Physics Of Slime Mold Navigation' salvo em 'C:\dev\automacoes-canais\data\temas_novos.json'.
+2024-11-28 10:19:23,151 - INFO - Número de temas já usados: 3
+2024-11-28 10:19:24,575 - INFO - Tema gerado: The Unexpected Physics Of Bubble Wraps Pop
+2024-11-28 10:19:24,575 - INFO - Tema 'The Unexpected Physics Of Bubble Wraps Pop' salvo em 'C:\dev\automacoes-canais\data\temas_usados.txt'.
+2024-11-28 10:19:24,575 - INFO - Tema 'The Unexpected Physics Of Bubble Wraps Pop' salvo em 'C:\dev\automacoes-canais\data\temas_novos.json'.
+2024-11-28 10:19:25,577 - WARNING - Método 'shutdown' não encontrado no SDK Gemini.

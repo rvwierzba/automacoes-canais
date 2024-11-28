@@ -1,0 +1,7 @@
+google-generativeai
+gTTS
+moviepy
+google-auth-oauthlib
+google-api-python-client
+python-dotenv
+selenium
