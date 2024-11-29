@@ -80,6 +80,7 @@ def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> 
 
 
 
+
 def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
     """
     Salva o vídeo final no caminho especificado.
