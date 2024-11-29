@@ -61,6 +61,7 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
         sys.exit(1)
 
 
+
 def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> CompositeVideoClip:
     """
     Combina o áudio com o vídeo.
