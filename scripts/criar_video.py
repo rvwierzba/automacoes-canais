@@ -2,7 +2,8 @@ import os
 import sys
 import json
 import logging
-from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
+from moviepy.editor import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
+import moviepy
 
 # Configuração básica de logging
 logging.basicConfig(
@@ -36,8 +37,11 @@ def carregar_imagem_background(caminho_background: str) -> ImageClip:
         sys.exit(1)
     
     try:
-        # Cria um ImageClip com a duração definida posteriormente
-        background = ImageClip(caminho_background).set_duration(60)  # Duração padrão de 60 segundos
+        # Log da versão do MoviePy
+        logging.info(f"Versão do MoviePy: {moviepy.__version__}")
+        
+        # Cria um ImageClip com a duração definida diretamente no construtor
+        background = ImageClip(caminho_background, duration=60)  # Duração padrão de 60 segundos
         logging.info(f"Imagem de fundo '{caminho_background}' carregada com sucesso.")
         return background
     except Exception as e:
