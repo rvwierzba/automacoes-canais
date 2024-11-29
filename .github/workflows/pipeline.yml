@@ -27,7 +27,7 @@ jobs:
 
       - name: Gerar Arquivo de Temas
         run: |
-          python scripts/run_pipeline.py
+          python run_pipeline.py  # Atualizado para a localização correta
 
       - name: Listar Arquivos para Depuração
         run: |
