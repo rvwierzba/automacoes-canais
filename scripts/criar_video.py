@@ -1,8 +1,8 @@
 import os
 import sys
+import json
 import logging
 from moviepy.editor import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
-from PIL import Image
 
 # Configuração básica de logging
 logging.basicConfig(
@@ -17,7 +17,7 @@ logging.basicConfig(
 def carregar_imagem_background(caminho_background: str) -> ImageClip:
     """
     Carrega a imagem de fundo a partir do caminho especificado.
-    
+
     :param caminho_background: Caminho para a imagem de fundo.
     :return: Um objeto ImageClip do moviepy.
     """
@@ -26,11 +26,9 @@ def carregar_imagem_background(caminho_background: str) -> ImageClip:
         sys.exit(1)
     
     try:
-        # Carrega a imagem usando Pillow para verificar se está correta
-        img = Image.open(caminho_background)
-        logging.info(f"Imagem de fundo '{caminho_background}' carregada com sucesso.")
         # Cria um ImageClip com a duração definida posteriormente
         background = ImageClip(caminho_background).set_duration(60)  # Duração padrão de 60 segundos
+        logging.info(f"Imagem de fundo '{caminho_background}' carregada com sucesso.")
         return background
     except Exception as e:
         logging.error(f"Erro ao carregar a imagem de fundo: {e}")
@@ -39,7 +37,7 @@ def carregar_imagem_background(caminho_background: str) -> ImageClip:
 def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
     """
     Adiciona texto ao vídeo.
-    
+
     :param video_clip: Clip de vídeo de fundo.
     :param texto: Texto a ser adicionado.
     :param posicao: Posição do texto no vídeo (x, y).
@@ -60,7 +58,7 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
 def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> CompositeVideoClip:
     """
     Combina o áudio com o vídeo.
-    
+
     :param video_clip: Clip de vídeo com texto adicionado.
     :param caminho_audio: Caminho para o arquivo de áudio.
     :return: Um objeto CompositeVideoClip com áudio adicionado.
@@ -83,7 +81,7 @@ def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> 
 def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
     """
     Salva o vídeo final no caminho especificado.
-    
+
     :param video_com_audio: Clip de vídeo com áudio.
     :param caminho_saida: Caminho onde o vídeo será salvo.
     """
@@ -96,24 +94,73 @@ def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
         logging.error(f"Erro ao salvar o vídeo: {e}")
         sys.exit(1)
 
+def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> Optional[str]:
+    """
+    Seleciona o primeiro tema disponível no arquivo de temas novos e move para temas usados.
+
+    :param caminho_temas_novos: Caminho para o arquivo de temas novos.
+    :param caminho_temas_usados: Caminho para o arquivo de temas usados.
+    :return: O tema selecionado ou None se não houver temas disponíveis.
+    """
+    if not os.path.exists(caminho_temas_novos):
+        logging.error(f"Arquivo de temas novos '{caminho_temas_novos}' não encontrado.")
+        sys.exit(1)
+    
+    try:
+        with open(caminho_temas_novos, 'r', encoding='utf-8') as f_novos, \
+             open(caminho_temas_usados, 'a', encoding='utf-8') as f_usados:
+            linhas = f_novos.readlines()
+            if not linhas:
+                logging.warning("Nenhum tema disponível para processar.")
+                return None
+            tema_json = linhas[0].strip()
+            if not tema_json:
+                logging.warning("Primeira linha está vazia. Pulando...")
+                return None
+            tema_dict = json.loads(tema_json)
+            tema = tema_dict.get("tema")
+            if not tema:
+                logging.warning("Tema não encontrado no JSON. Pulando...")
+                return None
+            # Escreve o tema usado no arquivo de temas usados
+            f_usados.write(tema_json + '\n')
+            # Remove o tema usado do arquivo de temas novos
+            with open(caminho_temas_novos, 'w', encoding='utf-8') as f_novos_write:
+                f_novos_write.writelines(linhas[1:])
+            logging.info(f"Tema selecionado: '{tema}'")
+            return tema
+    except json.JSONDecodeError as e:
+        logging.error(f"Erro ao decodificar JSON no arquivo de temas novos: {e}")
+        sys.exit(1)
+    except Exception as e:
+        logging.error(f"Erro ao selecionar tema: {e}")
+        sys.exit(1)
+
 def main():
     """
     Função principal que coordena a criação do vídeo.
     """
     logging.info("Iniciando a criação do vídeo...")
-    
+
     # Defina os caminhos corretos para os arquivos
     caminho_background = os.path.join('..', 'assets', 'background.png')  # ../assets/background.png
-    caminho_audio = os.path.join('..', 'audios', 'audio.mp3')  # Atualize conforme necessário
-    caminho_saida = os.path.join('..', 'videos', 'output_video.mp4')  # Atualize conforme necessário
+    caminho_audio = os.path.join('..', 'audios', 'audio.mp3')            # Atualize conforme necessário
+    caminho_saida = os.path.join('..', 'videos', 'output_video.mp4')   # Atualize conforme necessário
+    caminho_temas_novos = os.path.join('..', 'data', 'temas_novos.json')  # ../data/temas_novos.json
+    caminho_temas_usados = os.path.join('..', 'data', 'temas_usados.txt')  # ../data/temas_usados.txt
+
+    # Seleciona um tema
+    tema = selecionar_tema(caminho_temas_novos, caminho_temas_usados)
+    if not tema:
+        logging.error("Nenhum tema disponível para criar o vídeo. Encerrando o script.")
+        sys.exit(1)
     
     # Carrega a imagem de fundo
     background = carregar_imagem_background(caminho_background)
     
     # Adiciona texto ao vídeo
-    texto = "The Unexpected Physics Of Whispering Galleries"
     posicao_texto = ('center', 'bottom')  # Posição centralizada na parte inferior
-    video_com_texto = adicionar_texto(background, texto, posicao_texto)
+    video_com_texto = adicionar_texto(background, tema, posicao_texto)
     
     # Combina áudio com vídeo
     video_final = combinar_audio_video(video_com_texto, caminho_audio)
