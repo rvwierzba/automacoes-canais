@@ -1,51 +1,62 @@
-import subprocess
 import os
-from dotenv import load_dotenv
+import json
+import sys
+import logging
 
-def run_script(script_path):
+# Configuração básica de logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('run_pipeline.log', mode='a')
+    ]
+)
+
+def gerar_temas(caminho_saida_novos: str, caminho_saida_usados: str):
+    """
+    Gera um arquivo JSON com temas para a geração de áudio e move temas para usados.
+    
+    :param caminho_saida_novos: Caminho para o arquivo de temas novos.
+    :param caminho_saida_usados: Caminho para o arquivo de temas usados.
+    """
+    temas = [
+        {"tema": "The Unexpected Physics Of Sneezing", "descricao": "Why Are Sneezes So Loud"},
+        {"tema": "The Art of Minimalism"},
+        {"tema": "The Science Behind Whispering Galleries"}
+    ]
+    
     try:
-        subprocess.run(['python', script_path], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Erro ao executar {script_path}: {e}")
-        exit(1)  # Encerra o pipeline em caso de erro
+        # Garante que o diretório de saída existe
+        os.makedirs(os.path.dirname(caminho_saida_novos), exist_ok=True)
+        os.makedirs(os.path.dirname(caminho_saida_usados), exist_ok=True)
+        
+        with open(caminho_saida_novos, 'w', encoding='utf-8') as f_novos, \
+             open(caminho_saida_usados, 'a', encoding='utf-8') as f_usados:
+            for tema in temas:
+                json.dump(tema, f_novos)
+                f_novos.write('\n')
+                # Opcional: Registrar os temas gerados como usados imediatamente
+                # f_usados.write(json.dumps(tema) + '\n')
+        
+        logging.info(f"Arquivo de temas novos gerado com sucesso em '{caminho_saida_novos}'.")
+    except Exception as e:
+        logging.error(f"Erro ao gerar arquivo de temas: {e}")
+        sys.exit(1)
 
 def main():
-    # Carrega as variáveis de ambiente do .env
-    load_dotenv()
-
-    # Define o diretório dos scripts relativo à localização atual (raiz do projeto)
-    scripts_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scripts')
-
-    # Defina os caminhos completos para os scripts
-    gerar_tema = os.path.join(scripts_dir, 'generate_theme.py')
-    gerar_audio = os.path.join(scripts_dir, 'gerar_audio.py')
-    criar_video = os.path.join(scripts_dir, 'criar_video.py')
-    upload_youtube = os.path.join(scripts_dir, 'upload_youtube.py')
-    upload_tiktok = os.path.join(scripts_dir, 'upload_tiktok.py')  # Se aplicável
-
-    print("Iniciando o pipeline de automação...")
-
-    # Passo 1: Gerar Tema Único
-    print("\n[Passo 1] Gerando tema único...")
-    run_script(gerar_tema)
-
-    # Passo 2: Gerar Áudio
-    print("\n[Passo 2] Gerando áudio...")
-    run_script(gerar_audio)
-
-    # Passo 3: Criar Vídeo com Legendas
-    print("\n[Passo 3] Criando vídeo com legendas...")
-    run_script(criar_video)
-
-    # Passo 4: Upload para YouTube
-    print("\n[Passo 4] Fazendo upload para o YouTube...")
-    run_script(upload_youtube)
-
-    # Passo 5: Upload para TikTok (Opcional)
-     print("\n[Passo 5] Fazendo upload para o TikTok...")
-     run_script(upload_tiktok)
-
-    print("\nPipeline de automação concluído com sucesso!")
+    """
+    Função principal que coordena a geração do arquivo de temas.
+    """
+    logging.info("Iniciando o pipeline de geração de temas...")
+    
+    # Defina os caminhos corretos para os arquivos
+    caminho_saida_novos = os.path.join('data', 'temas_novos.json')  # data/temas_novos.json
+    caminho_saida_usados = os.path.join('data', 'temas_usados.txt')  # data/temas_usados.txt
+    
+    gerar_temas(caminho_saida_novos, caminho_saida_usados)
+    
+    logging.info("Pipeline de geração de temas concluído com sucesso.")
 
 if __name__ == "__main__":
     main()
