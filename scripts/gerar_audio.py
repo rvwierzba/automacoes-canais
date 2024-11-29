@@ -66,7 +66,7 @@ def main():
     """
     Função principal que coordena o processo de geração de áudio a partir de temas.
     """
-    caminho_arquivo = 'caminho_para_seu_arquivo.json'  # Atualize para o caminho correto
+    caminho_arquivo = '../data/temas_novos.json'  # Atualize para o caminho correto
     
     if not os.path.exists(caminho_arquivo):
         logging.error(f"Arquivo de entrada '{caminho_arquivo}' não encontrado.")
