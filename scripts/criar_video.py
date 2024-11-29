@@ -62,20 +62,21 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
 
 
 def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> CompositeVideoClip:
-    if not os.path.exists(caminho_audio):
-        logging.error(f"Arquivo de áudio '{caminho_audio}' não encontrado.")
-        sys.exit(1)
-    
-    try:
-        audio_clip = AudioFileClip(caminho_audio)
-        # Ajusta a duração do áudio para coincidir com o vídeo
-        audio_clip = audio_clip.set_duration(video_clip.duration)
-        video_com_audio = video_clip.set_audio(audio_clip)
-        logging.info(f"Áudio '{caminho_audio}' combinado com o vídeo com sucesso.")
-        return video_com_audio
-    except Exception as e:
-        logging.error(f"Erro ao combinar áudio com vídeo: {e}")
-        sys.exit(1)
+    if os.path.exists(caminho_audio):
+        try:
+            audio_clip = AudioFileClip(caminho_audio)
+            # Ajusta a duração do áudio para coincidir com o vídeo
+            audio_clip = audio_clip.set_duration(video_clip.duration)
+            video_com_audio = video_clip.set_audio(audio_clip)
+            logging.info(f"Áudio '{caminho_audio}' combinado com o vídeo com sucesso.")
+            return video_com_audio
+        except Exception as e:
+            logging.error(f"Erro ao combinar áudio com vídeo: {e}")
+            sys.exit(1)
+    else:
+        logging.warning(f"Arquivo de áudio '{caminho_audio}' não encontrado. Criando vídeo sem áudio.")
+        return video_clip
+
 
 
 
