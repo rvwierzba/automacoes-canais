@@ -2,7 +2,7 @@ import os
 import sys
 import json
 import logging
-from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
+from moviepy.editor import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
 
 # Configuração básica de logging
 logging.basicConfig(
@@ -94,7 +94,7 @@ def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
         logging.error(f"Erro ao salvar o vídeo: {e}")
         sys.exit(1)
 
-def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> Optional[str]:
+def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
     """
     Seleciona o primeiro tema disponível no arquivo de temas novos e move para temas usados.
 
@@ -143,31 +143,31 @@ def main():
     logging.info("Iniciando a criação do vídeo...")
 
     # Defina os caminhos corretos para os arquivos
-    caminho_background = os.path.join('..', 'assets', 'background.png')  # ../assets/background.png
-    caminho_audio = os.path.join('..', 'audios', 'audio.mp3')            # Atualize conforme necessário
-    caminho_saida = os.path.join('..', 'videos', 'output_video.mp4')   # Atualize conforme necessário
-    caminho_temas_novos = os.path.join('..', 'data', 'temas_novos.json')  # ../data/temas_novos.json
-    caminho_temas_usados = os.path.join('..', 'data', 'temas_usados.txt')  # ../data/temas_usados.txt
+    caminho_background = os.path.join('..', 'assets', 'background.png')        # ../assets/background.png
+    caminho_audio = os.path.join('..', 'audios', 'audio.mp3')                # ../audios/audio.mp3
+    caminho_saida = os.path.join('..', 'videos', 'output_video.mp4')         # ../videos/output_video.mp4
+    caminho_temas_novos = os.path.join('..', 'data', 'temas_novos.json')    # ../data/temas_novos.json
+    caminho_temas_usados = os.path.join('..', 'data', 'temas_usados.txt')    # ../data/temas_usados.txt
 
     # Seleciona um tema
     tema = selecionar_tema(caminho_temas_novos, caminho_temas_usados)
     if not tema:
         logging.error("Nenhum tema disponível para criar o vídeo. Encerrando o script.")
         sys.exit(1)
-    
+
     # Carrega a imagem de fundo
     background = carregar_imagem_background(caminho_background)
-    
+
     # Adiciona texto ao vídeo
     posicao_texto = ('center', 'bottom')  # Posição centralizada na parte inferior
     video_com_texto = adicionar_texto(background, tema, posicao_texto)
-    
+
     # Combina áudio com vídeo
     video_final = combinar_audio_video(video_com_texto, caminho_audio)
-    
+
     # Salva o vídeo final
     salvar_video(video_final, caminho_saida)
-    
+
     logging.info("Processo de criação do vídeo concluído com sucesso.")
 
 if __name__ == "__main__":
