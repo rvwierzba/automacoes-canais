@@ -2,6 +2,7 @@ name: Pipeline de Automação de Vídeos
 
 on:
   schedule:
+    # Executa às 5:00 AM e 7:00 PM de São Paulo (BRT - UTC-3)
     - cron: '0 8 * * *'  # 5:00 AM BRT → 8:00 AM UTC
     - cron: '0 22 * * *' # 7:00 PM BRT → 10:00 PM UTC
   workflow_dispatch:  # Permite execução manual
