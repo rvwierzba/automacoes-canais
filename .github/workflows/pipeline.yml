@@ -1,87 +1,46 @@
 name: Pipeline de Automação de Vídeos
 
 on:
-  schedule:
-    # Executa às 5:00 AM e 7:00 PM de São Paulo (BRT - UTC-3)
-    - cron: '0 8 * * *'  # 5:00 AM BRT → 8:00 AM UTC
-    - cron: '0 22 * * *' # 7:00 PM BRT → 10:00 PM UTC
-  workflow_dispatch:  # Permite execução manual
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout do Repositório
-        uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-      - name: Configurar Python 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
 
-      - name: Instalar Dependências
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+    - name: Instalar Dependências
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
-      - name: Listar Pacotes Instalados
-        run: |
-          pip list
+    - name: Atualizar MoviePy
+      run: |
+        pip install --upgrade moviepy>=2.1.1
 
-      - name: Verificar Versão do MoviePy
-        run: |
-          python -c "import moviepy; print('Versão do MoviePy:', moviepy.__version__)"
+    - name: Listar Pacotes Instalados
+      run: |
+        pip list
 
-      - name: Gerar Arquivo de Temas
-        run: |
-          python run_pipeline.py
+    - name: Verificar Versão do MoviePy
+      run: |
+        python -c "import moviepy; print('Versão do MoviePy:', moviepy.__version__)"
 
-      - name: Listar Arquivos no Diretório 'data' para Depuração
-        run: |
-          echo "Listando arquivos no diretório 'data':"
-          ls -la data/
+    - name: Executar Criação de Vídeo
+      run: |
+        python scripts/criar_video.py
 
-      - name: Verificar Conteúdo de 'data/temas_novos.json'
-        run: |
-          echo "Conteúdo de 'data/temas_novos.json':"
-          cat data/temas_novos.json || echo "Arquivo 'temas_novos.json' não encontrado."
-
-      - name: Listar Arquivos no Diretório 'assets' para Depuração
-        run: |
-          echo "Listando arquivos no diretório 'assets':"
-          ls -la assets/
-
-      - name: Listar Arquivos no Diretório 'scripts' para Depuração
-        run: |
-          echo "Listando arquivos no diretório 'scripts':"
-          ls -la scripts/
-
-      - name: Verificar Conteúdo de 'scripts/criar_video.py'
-        run: |
-          echo "Conteúdo de 'scripts/criar_video.py':"
-          cat scripts/criar_video.py || echo "Arquivo 'criar_video.py' não encontrado."
-
-      - name: Configurar Variáveis de Ambiente
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
-          TIKTOK_EMAIL: ${{ secrets.TIKTOK_EMAIL }}
-          TIKTOK_SENHA: ${{ secrets.TIKTOK_SENHA }}
-          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
-        run: |
-          echo "GEMINI_API_KEY=${GEMINI_API_KEY}" >> $GITHUB_ENV
-          echo "YOUTUBE_CHANNEL_ID=${YOUTUBE_CHANNEL_ID}" >> $GITHUB_ENV
-          echo "TIKTOK_EMAIL=${TIKTOK_EMAIL}" >> $GITHUB_ENV
-          echo "TIKTOK_SENHA=${TIKTOK_SENHA}" >> $GITHUB_ENV
-          echo "PIXABAY_API_KEY=${PIXABAY_API_KEY}" >> $GITHUB_ENV
-
-      - name: Executar Criação de Vídeo
-        run: |
-          python scripts/criar_video.py
-
-      - name: Upload de Logs
-        uses: actions/upload-artifact@v3
-        with:
-          name: logs
-          path: criar_video.log
+    - name: Upload de Logs
+      uses: actions/upload-artifact@v3
+      with:
+        name: logs
+        path: scripts/criar_video.log
