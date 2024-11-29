@@ -49,18 +49,9 @@ def carregar_imagem_background(caminho_background: str) -> ImageClip:
         sys.exit(1)
 
 def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
-    """
-    Adiciona texto ao vídeo.
-
-    :param video_clip: Clip de vídeo de fundo.
-    :param texto: Texto a ser adicionado.
-    :param posicao: Posição do texto no vídeo (x, y).
-    :param fontsize: Tamanho da fonte do texto.
-    :param color: Cor do texto.
-    :return: Um objeto CompositeVideoClip com o texto adicionado.
-    """
     try:
-        txt_clip = TextClip(texto, fontsize=fontsize, color=color, font='Arial-Bold')
+        # Especifica 'text' explicitamente para evitar conflitos
+        txt_clip = TextClip(text=texto, fontsize=fontsize, color=color, font='Arial-Bold')
         txt_clip = txt_clip.set_position(posicao).set_duration(video_clip.duration)
         composite = CompositeVideoClip([video_clip, txt_clip])
         logging.info(f"Texto '{texto}' adicionado ao vídeo na posição {posicao}.")
@@ -68,6 +59,7 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
     except Exception as e:
         logging.error(f"Erro ao adicionar texto ao vídeo: {e}")
         sys.exit(1)
+
 
 def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> CompositeVideoClip:
     """
