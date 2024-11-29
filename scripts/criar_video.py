@@ -1,88 +1,127 @@
 import os
-import re
-from moviepy import ImageClip, TextClip, CompositeVideoClip, AudioFileClip
+import sys
+import logging
+from moviepy.editor import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
+from PIL import Image
 
-def sanitize_filename(filename):
-    # Remove caracteres inválidos para nomes de arquivos
-    return re.sub(r'[\\/*?:"<>|]', "", filename).replace(' ', '_')
+# Configuração básica de logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('criar_video.log', mode='a')
+    ]
+)
 
-def create_video(background_path, logo_path, audio_path, output_video, title, subtitle_text):
+def carregar_imagem_background(caminho_background: str) -> ImageClip:
+    """
+    Carrega a imagem de fundo a partir do caminho especificado.
+    
+    :param caminho_background: Caminho para a imagem de fundo.
+    :return: Um objeto ImageClip do moviepy.
+    """
+    if not os.path.exists(caminho_background):
+        logging.error(f"Imagem de fundo '{caminho_background}' não encontrada.")
+        sys.exit(1)
+    
     try:
-        # Carregar áudio
-        audio = AudioFileClip(audio_path)
-        
-        # Carregar imagem de fundo e definir duração para a duração do áudio
-        background = ImageClip(background_path).set_duration(audio.duration).resize(height=720)
-        background = background.resize(width=1280)  # Ajusta a largura para 1280
-        
-        # Carregar o logo e redimensionar (se existir)
-        if os.path.exists(logo_path):
-            logo = ImageClip(logo_path, transparent=True).set_duration(audio.duration)
-            logo = logo.resize(height=100)  # Redimensiona o logo para 100 pixels de altura
-            # Posicionar o logo no canto inferior direito com margem
-            logo = logo.set_position(("right", "bottom")).margin(right=10, bottom=10, opacity=0)
-        else:
-            logo = None
-            print(f"Logo não encontrado em {logo_path}. O vídeo será criado sem logo.")
-        
-        # Criar um clipe de texto para o título
-        txt_clip = TextClip(title, fontsize=70, color='white', stroke_color='black', stroke_width=2)
-        txt_clip = txt_clip.set_position('top').set_duration(audio.duration).margin(top=10, opacity=0)
-        
-        # Criar um clipe de texto para as legendas (subtitles)
-        subtitle_clip = TextClip(subtitle_text, fontsize=40, color='white', stroke_color='black', stroke_width=1, method='caption', size=(1100, None))
-        subtitle_clip = subtitle_clip.set_position(('center', 'bottom')).set_duration(audio.duration).margin(bottom=50, opacity=0)
-        
-        # Combinar todos os elementos
-        if logo:
-            video = CompositeVideoClip([background, logo, txt_clip, subtitle_clip])
-        else:
-            video = CompositeVideoClip([background, txt_clip, subtitle_clip])
-        
-        # Adicionar áudio ao vídeo
-        video = video.set_audio(audio)
-        
-        # Exportar o vídeo
-        video.write_videofile(output_video, fps=24, codec='libx264', audio_codec='aac')
-        
-        # Fechar os clipes para liberar recursos
-        audio.close()
-        background.close()
-        if logo:
-            logo.close()
-        txt_clip.close()
-        subtitle_clip.close()
-        video.close()
-        
-        print(f"Vídeo criado: {output_video}")
+        # Carrega a imagem usando Pillow para verificar se está correta
+        img = Image.open(caminho_background)
+        logging.info(f"Imagem de fundo '{caminho_background}' carregada com sucesso.")
+        # Cria um ImageClip com a duração definida posteriormente
+        background = ImageClip(caminho_background).set_duration(60)  # Duração padrão de 60 segundos
+        return background
     except Exception as e:
-        print(f"Erro ao criar o vídeo {output_video}: {e}")
+        logging.error(f"Erro ao carregar a imagem de fundo: {e}")
+        sys.exit(1)
+
+def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
+    """
+    Adiciona texto ao vídeo.
+    
+    :param video_clip: Clip de vídeo de fundo.
+    :param texto: Texto a ser adicionado.
+    :param posicao: Posição do texto no vídeo (x, y).
+    :param fontsize: Tamanho da fonte do texto.
+    :param color: Cor do texto.
+    :return: Um objeto CompositeVideoClip com o texto adicionado.
+    """
+    try:
+        txt_clip = TextClip(texto, fontsize=fontsize, color=color, font='Arial-Bold')
+        txt_clip = txt_clip.set_position(posicao).set_duration(video_clip.duration)
+        composite = CompositeVideoClip([video_clip, txt_clip])
+        logging.info(f"Texto '{texto}' adicionado ao vídeo na posição {posicao}.")
+        return composite
+    except Exception as e:
+        logging.error(f"Erro ao adicionar texto ao vídeo: {e}")
+        sys.exit(1)
+
+def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> CompositeVideoClip:
+    """
+    Combina o áudio com o vídeo.
+    
+    :param video_clip: Clip de vídeo com texto adicionado.
+    :param caminho_audio: Caminho para o arquivo de áudio.
+    :return: Um objeto CompositeVideoClip com áudio adicionado.
+    """
+    if not os.path.exists(caminho_audio):
+        logging.error(f"Arquivo de áudio '{caminho_audio}' não encontrado.")
+        sys.exit(1)
+    
+    try:
+        audio_clip = AudioFileClip(caminho_audio)
+        # Ajusta a duração do áudio para coincidir com o vídeo
+        audio_clip = audio_clip.set_duration(video_clip.duration)
+        video_com_audio = video_clip.set_audio(audio_clip)
+        logging.info(f"Áudio '{caminho_audio}' combinado com o vídeo com sucesso.")
+        return video_com_audio
+    except Exception as e:
+        logging.error(f"Erro ao combinar áudio com vídeo: {e}")
+        sys.exit(1)
+
+def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
+    """
+    Salva o vídeo final no caminho especificado.
+    
+    :param video_com_audio: Clip de vídeo com áudio.
+    :param caminho_saida: Caminho onde o vídeo será salvo.
+    """
+    try:
+        # Garante que o diretório de saída existe
+        os.makedirs(os.path.dirname(caminho_saida), exist_ok=True)
+        video_com_audio.write_videofile(caminho_saida, codec='libx264', audio_codec='aac')
+        logging.info(f"Vídeo salvo com sucesso em '{caminho_saida}'.")
+    except Exception as e:
+        logging.error(f"Erro ao salvar o vídeo: {e}")
+        sys.exit(1)
 
 def main():
-    # Caminhos
-    assets_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'assets')
-    background_path = os.path.join(assets_dir, 'background.png')  # Substitua por assets/background.png
-    logo_path = os.path.join(assets_dir, 'logo.png')  # Utilize a versão transparente do logo
-    audio_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'audio')
-    generated_videos_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'generated_videos')
+    """
+    Função principal que coordena a criação do vídeo.
+    """
+    logging.info("Iniciando a criação do vídeo...")
     
-    # Verifique se a pasta de vídeos gerados existe, caso contrário, crie
-    if not os.path.exists(generated_videos_dir):
-        os.makedirs(generated_videos_dir)
+    # Defina os caminhos corretos para os arquivos
+    caminho_background = os.path.join('..', 'assets', 'background.png')  # ../assets/background.png
+    caminho_audio = os.path.join('..', 'audios', 'audio.mp3')  # Atualize conforme necessário
+    caminho_saida = os.path.join('..', 'videos', 'output_video.mp4')  # Atualize conforme necessário
     
-    for arquivo_audio in os.listdir(audio_dir):
-        if arquivo_audio.endswith(".mp3"):
-            titulo = arquivo_audio.replace('.mp3', '').replace('_', ' ')
-            caminho_audio = os.path.join(audio_dir, arquivo_audio)
-            nome_video = f"{sanitize_filename(titulo)}.mp4"
-            caminho_video = os.path.join(generated_videos_dir, nome_video)
-            
-            # Defina as legendas (subtitles) com base no tema
-            # Você pode personalizar este texto conforme necessário
-            subtitle_text = f"Did you know about {titulo}? Let's dive into some fascinating facts!"
-            
-            # Criar vídeo
-            create_video(background_path, logo_path, caminho_audio, caminho_video, titulo, subtitle_text)
+    # Carrega a imagem de fundo
+    background = carregar_imagem_background(caminho_background)
+    
+    # Adiciona texto ao vídeo
+    texto = "The Unexpected Physics Of Whispering Galleries"
+    posicao_texto = ('center', 'bottom')  # Posição centralizada na parte inferior
+    video_com_texto = adicionar_texto(background, texto, posicao_texto)
+    
+    # Combina áudio com vídeo
+    video_final = combinar_audio_video(video_com_texto, caminho_audio)
+    
+    # Salva o vídeo final
+    salvar_video(video_final, caminho_saida)
+    
+    logging.info("Processo de criação do vídeo concluído com sucesso.")
 
 if __name__ == "__main__":
     main()
