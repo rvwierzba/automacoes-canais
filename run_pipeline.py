@@ -42,8 +42,8 @@ def main():
     run_script(upload_youtube)
 
     # Passo 5: Upload para TikTok (Opcional)
-    # print("\n[Passo 5] Fazendo upload para o TikTok...")
-    # run_script(upload_tiktok)
+     print("\n[Passo 5] Fazendo upload para o TikTok...")
+     run_script(upload_tiktok)
 
     print("\nPipeline de automação concluído com sucesso!")
 
