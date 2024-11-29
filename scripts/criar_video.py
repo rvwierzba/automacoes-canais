@@ -2,7 +2,7 @@ import os
 import sys
 import json
 import logging
-from moviepy.editor import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
+from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
 import moviepy
 
 # Configuração básica de logging
