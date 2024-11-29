@@ -1,6 +1,7 @@
 google-generativeai
 gTTS
-moviepy
+moviepy>=1.0.3
+Pillow>=8.0.0
 google-auth-oauthlib
 google-api-python-client
 python-dotenv
