@@ -14,6 +14,16 @@ logging.basicConfig(
     ]
 )
 
+def obter_caminho_absoluto(relativo):
+    """
+    Converte um caminho relativo para absoluto baseado na localização do script.
+    
+    :param relativo: Caminho relativo.
+    :return: Caminho absoluto.
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.normpath(os.path.join(script_dir, relativo))
+
 def carregar_imagem_background(caminho_background: str) -> ImageClip:
     """
     Carrega a imagem de fundo a partir do caminho especificado.
@@ -142,12 +152,12 @@ def main():
     """
     logging.info("Iniciando a criação do vídeo...")
 
-    # Defina os caminhos corretos para os arquivos
-    caminho_background = os.path.join('..', 'assets', 'background.png')        # ../assets/background.png
-    caminho_audio = os.path.join('..', 'audios', 'audio.mp3')                # ../audios/audio.mp3
-    caminho_saida = os.path.join('..', 'videos', 'output_video.mp4')         # ../videos/output_video.mp4
-    caminho_temas_novos = os.path.join('..', 'data', 'temas_novos.json')    # ../data/temas_novos.json
-    caminho_temas_usados = os.path.join('..', 'data', 'temas_usados.txt')    # ../data/temas_usados.txt
+    # Defina os caminhos corretos para os arquivos usando caminhos absolutos
+    caminho_background = obter_caminho_absoluto('../assets/background.png')        # ../assets/background.png
+    caminho_audio = obter_caminho_absoluto('../audios/audio.mp3')                # ../audios/audio.mp3
+    caminho_saida = obter_caminho_absoluto('../videos/output_video.mp4')         # ../videos/output_video.mp4
+    caminho_temas_novos = obter_caminho_absoluto('../data/temas_novos.json')    # ../data/temas_novos.json
+    caminho_temas_usados = obter_caminho_absoluto('../data/temas_usados.txt')    # ../data/temas_usados.txt
 
     # Seleciona um tema
     tema = selecionar_tema(caminho_temas_novos, caminho_temas_usados)
