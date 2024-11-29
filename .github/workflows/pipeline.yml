@@ -27,12 +27,17 @@ jobs:
 
       - name: Gerar Arquivo de Temas
         run: |
-          python run_pipeline.py  # Atualizado para a localização correta
+          python run_pipeline.py
 
-      - name: Listar Arquivos para Depuração
+      - name: Listar Arquivos no Diretório 'data' para Depuração
         run: |
           echo "Listando arquivos no diretório 'data':"
           ls -la data/
+
+      - name: Listar Arquivos no Diretório 'scripts' para Depuração
+        run: |
+          echo "Listando arquivos no diretório 'scripts':"
+          ls -la scripts/
 
       - name: Configurar Variáveis de Ambiente
         env:
