@@ -106,10 +106,10 @@ def gerar_temas_via_gemini() -> list:
     """
     api_key = os.getenv('GEMINI_API_KEY')
     if not api_key:
-        logging.error("GEMINI_API_KEY não está definida no arquivo .env.")
+        logging.error("GEMINI_API_KEY não está definida no arquivo .env ou nos Secrets do GitHub.")
         sys.exit(1)
     
-    endpoint = "https://api.gemini.com/v1/generate_themes"  # Substitua pelo endpoint real da API Gemini
+    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key="  # Substitua pelo endpoint real da API Gemini
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
@@ -154,6 +154,15 @@ def carregar_temas(caminho_arquivo):
                 return {"temas": temas}
             data = json.loads(conteudo)
             logging.info(f"Dados carregados do JSON: {data}")  # Log dos dados carregados
+
+            temas = data.get("temas", [])
+            if not temas:
+                logging.warning(f"Lista de temas no arquivo '{caminho_arquivo}' está vazia. Gerando novos temas via Gemini.")
+                temas = gerar_temas_via_gemini()
+                atualizar_temas(caminho_arquivo, temas)
+                data["temas"] = temas
+                return data
+
             return data
         except json.JSONDecodeError as e:
             logging.error(f"Erro ao decodificar JSON no arquivo de temas novos: {e}")
