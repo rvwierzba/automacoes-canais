@@ -4,7 +4,7 @@ import json
 import logging
 from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
 import moviepy
-import google.ai.generativelanguage_v1 as glm
+import google.generativeai as glm
 from dotenv import load_dotenv
 
 # Carrega as variáveis de ambiente do arquivo .env
@@ -111,15 +111,15 @@ def gerar_temas_via_gemini() -> list:
     
     try:
         # Inicializa o cliente Gemini
-        client = glm.GenerativeServiceClient(
-            client_options=dict(api_key=api_key)
-        )
+        client = glm.Client(api_key=api_key)
         
         # Define o conteúdo para gerar temas
-        request = glm.GenerateContentRequest(
-            model="models/gemini-1.5-flash",
-            contents=[{"parts": [{"text": "Gere uma lista de 5 temas interessantes para vídeos de YouTube"}]}]
-        )
+        request = {
+            "model": "models/gemini-1.5-flash",
+            "prompt": "Gere uma lista de 5 temas interessantes para vídeos de YouTube",
+            "temperature": 0.7,
+            "max_output_tokens": 100
+        }
         
         logging.info("Chamando a API do Gemini para gerar novos temas...")
         response = client.generate_content(request)
@@ -127,9 +127,11 @@ def gerar_temas_via_gemini() -> list:
         
         # Extrai os temas gerados
         temas = []
-        for choice in response.choices:
-            texto = ''.join([part.text for part in choice.contents[0].parts])
-            temas.append(texto.strip())
+        for choice in response['choices']:
+            texto = choice['text'].strip()
+            if texto:
+                # Assume que os temas estão separados por linhas ou vírgulas
+                temas.extend([tema.strip() for tema in texto.split('\n') if tema.strip()])
         
         if not temas:
             logging.warning("Gemini retornou uma lista vazia de temas.")
@@ -139,7 +141,6 @@ def gerar_temas_via_gemini() -> list:
     except Exception as e:
         logging.error(f"Erro ao chamar a API do Gemini: {e}")
         sys.exit(1)
-
 
 def carregar_temas(caminho_arquivo):
     caminho_absoluto = os.path.abspath(caminho_arquivo)
