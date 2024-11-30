@@ -140,6 +140,7 @@ def gerar_temas_via_gemini() -> list:
         logging.error(f"Erro ao chamar a API do Gemini: {e}")
         sys.exit(1)
 
+
 def carregar_temas(caminho_arquivo):
     caminho_absoluto = os.path.abspath(caminho_arquivo)
     logging.info(f"Caminho absoluto do arquivo de temas: {caminho_absoluto}")
