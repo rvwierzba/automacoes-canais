@@ -109,7 +109,7 @@ def gerar_temas_via_gemini() -> list:
         logging.error("GEMINI_API_KEY não está definida no arquivo .env.")
         sys.exit(1)
     
-    endpoint = "https://api.gemini.com/v1/generate_themes"  # Exemplo de endpoint, substitua pelo real
+    endpoint = "https://api.gemini.com/v1/generate_themes"  # Substitua pelo endpoint real da API Gemini
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
