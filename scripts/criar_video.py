@@ -4,6 +4,11 @@ import json
 import logging
 from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
 import moviepy
+import requests
+from dotenv import load_dotenv
+
+# Carrega as variáveis de ambiente do arquivo .env
+load_dotenv()
 
 # Configuração básica de logging
 logging.basicConfig(
@@ -93,6 +98,43 @@ def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
         logging.error(f"Erro ao salvar o vídeo: {e}")
         sys.exit(1)
 
+def gerar_temas_via_gemini() -> list:
+    """
+    Gera uma lista de temas utilizando a API do Gemini.
+
+    :return: Lista de temas gerados.
+    """
+    api_key = os.getenv('GEMINI_API_KEY')
+    if not api_key:
+        logging.error("GEMINI_API_KEY não está definida no arquivo .env.")
+        sys.exit(1)
+    
+    endpoint = "https://api.gemini.com/v1/generate_themes"  # Exemplo de endpoint, substitua pelo real
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "num_themes": 5  # Número de temas a serem gerados
+    }
+
+    try:
+        response = requests.post(endpoint, headers=headers, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        temas = data.get("temas", [])
+        if not temas:
+            logging.warning("Gemini retornou uma lista vazia de temas.")
+        else:
+            logging.info(f"Temas gerados via Gemini: {temas}")
+        return temas
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Erro ao chamar a API do Gemini: {e}")
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        logging.error(f"Erro ao decodificar resposta JSON da API do Gemini: {e}")
+        sys.exit(1)
+
 def carregar_temas(caminho_arquivo):
     caminho_absoluto = os.path.abspath(caminho_arquivo)
     logging.info(f"Caminho absoluto do arquivo de temas: {caminho_absoluto}")
@@ -106,14 +148,31 @@ def carregar_temas(caminho_arquivo):
         logging.info(f"Conteúdo do arquivo de temas: {conteudo}")  # Log do conteúdo
         try:
             if not conteudo:
-                logging.warning(f"Arquivo de temas '{caminho_arquivo}' está vazio. Inicializando com lista vazia.")
-                return []
+                logging.warning(f"Arquivo de temas '{caminho_arquivo}' está vazio. Gerando novos temas via Gemini.")
+                temas = gerar_temas_via_gemini()
+                atualizar_temas(caminho_arquivo, temas)
+                return {"temas": temas}
             data = json.loads(conteudo)
             logging.info(f"Dados carregados do JSON: {data}")  # Log dos dados carregados
             return data
         except json.JSONDecodeError as e:
             logging.error(f"Erro ao decodificar JSON no arquivo de temas novos: {e}")
             sys.exit(1)
+
+def atualizar_temas(caminho_arquivo: str, novos_temas: list):
+    """
+    Atualiza o arquivo de temas com os novos temas gerados.
+
+    :param caminho_arquivo: Caminho para o arquivo de temas novos.
+    :param novos_temas: Lista de novos temas a serem adicionados.
+    """
+    try:
+        with open(caminho_arquivo, 'w', encoding='utf-8') as f:
+            json.dump({"temas": novos_temas}, f, indent=2, ensure_ascii=False)
+        logging.info(f"Arquivo de temas '{caminho_arquivo}' atualizado com novos temas.")
+    except Exception as e:
+        logging.error(f"Erro ao atualizar o arquivo de temas: {e}")
+        sys.exit(1)
 
 def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
     """
@@ -123,10 +182,6 @@ def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
     :param caminho_temas_usados: Caminho para o arquivo de temas usados.
     :return: O tema selecionado ou None se não houver temas disponíveis.
     """
-    if not os.path.exists(caminho_temas_novos):
-        logging.error(f"Arquivo de temas novos '{caminho_temas_novos}' não encontrado.")
-        sys.exit(1)
-    
     try:
         with open(caminho_temas_novos, 'r', encoding='utf-8') as f_novos:
             data = json.load(f_novos)
@@ -173,7 +228,7 @@ def main():
     caminho_temas_novos = obter_caminho_absoluto('../data/temas_novos.json')    # ../data/temas_novos.json
     caminho_temas_usados = obter_caminho_absoluto('../data/temas_usados.txt')    # ../data/temas_usados.txt
 
-    # Carrega os temas disponíveis
+    # Carrega os temas disponíveis (ou gera novos se estiver vazio)
     temas_data = carregar_temas(caminho_temas_novos)
     
     # Seleciona um tema
