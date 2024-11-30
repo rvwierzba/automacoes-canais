@@ -2,7 +2,7 @@ import os
 import sys
 import json
 import logging
-from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
+from moviepy.editor import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
 import moviepy
 
 # Configuração básica de logging
@@ -50,7 +50,7 @@ def carregar_imagem_background(caminho_background: str) -> ImageClip:
 
 def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
     try:
-       #txt_clip = TextClip(txt=texto, fontsize=fontsize, color=color, font='Arial-Bold')
+        # Chamada correta do TextClip com argumentos posicionais
         txt_clip = TextClip(texto, 'Arial-Bold', fontsize, color)
 
         txt_clip = txt_clip.set_position(posicao).set_duration(video_clip.duration)
@@ -60,8 +60,6 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
     except Exception as e:
         logging.error(f"Erro ao adicionar texto ao vídeo: {e}")
         sys.exit(1)
-
-
 
 def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> CompositeVideoClip:
     if os.path.exists(caminho_audio):
@@ -79,10 +77,6 @@ def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> 
         logging.warning(f"Arquivo de áudio '{caminho_audio}' não encontrado. Criando vídeo sem áudio.")
         return video_clip
 
-
-
-
-
 def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
     """
     Salva o vídeo final no caminho especificado.
@@ -99,6 +93,28 @@ def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
         logging.error(f"Erro ao salvar o vídeo: {e}")
         sys.exit(1)
 
+def carregar_temas(caminho_arquivo):
+    caminho_absoluto = os.path.abspath(caminho_arquivo)
+    logging.info(f"Caminho absoluto do arquivo de temas: {caminho_absoluto}")
+    
+    if not os.path.exists(caminho_arquivo):
+        logging.error(f"Arquivo de temas '{caminho_arquivo}' não encontrado.")
+        sys.exit(1)
+    
+    with open(caminho_arquivo, 'r', encoding='utf-8') as f:
+        conteudo = f.read().strip()
+        logging.info(f"Conteúdo do arquivo de temas: {conteudo}")  # Log do conteúdo
+        try:
+            if not conteudo:
+                logging.warning(f"Arquivo de temas '{caminho_arquivo}' está vazio. Inicializando com lista vazia.")
+                return []
+            data = json.loads(conteudo)
+            logging.info(f"Dados carregados do JSON: {data}")  # Log dos dados carregados
+            return data
+        except json.JSONDecodeError as e:
+            logging.error(f"Erro ao decodificar JSON no arquivo de temas novos: {e}")
+            sys.exit(1)
+
 def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
     """
     Seleciona o primeiro tema disponível no arquivo de temas novos e move para temas usados.
@@ -112,28 +128,31 @@ def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
         sys.exit(1)
     
     try:
-        with open(caminho_temas_novos, 'r', encoding='utf-8') as f_novos, \
-             open(caminho_temas_usados, 'a', encoding='utf-8') as f_usados:
-            linhas = f_novos.readlines()
-            if not linhas:
-                logging.warning("Nenhum tema disponível para processar.")
-                return None
-            tema_json = linhas[0].strip()
-            if not tema_json:
-                logging.warning("Primeira linha está vazia. Pulando...")
-                return None
-            tema_dict = json.loads(tema_json)
-            tema = tema_dict.get("tema")
-            if not tema:
-                logging.warning("Tema não encontrado no JSON. Pulando...")
-                return None
-            # Escreve o tema usado no arquivo de temas usados
-            f_usados.write(tema_json + '\n')
-            # Remove o tema usado do arquivo de temas novos
-            with open(caminho_temas_novos, 'w', encoding='utf-8') as f_novos_write:
-                f_novos_write.writelines(linhas[1:])
-            logging.info(f"Tema selecionado: '{tema}'")
-            return tema
+        with open(caminho_temas_novos, 'r', encoding='utf-8') as f_novos:
+            data = json.load(f_novos)
+            logging.info(f"Dados carregados do JSON de temas novos: {data}")
+        
+        temas = data.get("temas", [])
+        logging.info(f"Temas disponíveis: {temas}")
+        
+        if not temas:
+            logging.warning("Nenhum tema disponível para processar.")
+            return None
+        
+        tema = temas.pop(0)
+        logging.info(f"Tema selecionado: '{tema}'")
+        
+        # Escreve o tema usado no arquivo de temas usados
+        with open(caminho_temas_usados, 'a', encoding='utf-8') as f_usados:
+            f_usados.write(json.dumps({"tema": tema}, ensure_ascii=False) + '\n')
+            logging.info(f"Tema '{tema}' escrito em '{caminho_temas_usados}'.")
+        
+        # Atualiza o arquivo de temas novos
+        with open(caminho_temas_novos, 'w', encoding='utf-8') as f_novos_write:
+            json.dump({"temas": temas}, f_novos_write, indent=2, ensure_ascii=False)
+            logging.info(f"Arquivo de temas novos atualizado em '{caminho_temas_novos}'.")
+        
+        return tema
     except json.JSONDecodeError as e:
         logging.error(f"Erro ao decodificar JSON no arquivo de temas novos: {e}")
         sys.exit(1)
@@ -154,6 +173,9 @@ def main():
     caminho_temas_novos = obter_caminho_absoluto('../data/temas_novos.json')    # ../data/temas_novos.json
     caminho_temas_usados = obter_caminho_absoluto('../data/temas_usados.txt')    # ../data/temas_usados.txt
 
+    # Carrega os temas disponíveis
+    temas_data = carregar_temas(caminho_temas_novos)
+    
     # Seleciona um tema
     tema = selecionar_tema(caminho_temas_novos, caminho_temas_usados)
     if not tema:
