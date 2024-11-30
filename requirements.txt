@@ -7,4 +7,4 @@ google-api-python-client
 python-dotenv>=0.21.0
 selenium
 requests>=2.25.0
-google-ai-generativelanguage_v1>=1.0.0
+
