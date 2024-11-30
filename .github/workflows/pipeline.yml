@@ -27,10 +27,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install --no-cache-dir -r requirements.txt
 
-    # Passo 4: Verificar Instalação do MoviePy
-    - name: Verify MoviePy Installation
+    # Passo 4: Verificar Instalação do MoviePy e Biblioteca Gemini
+    - name: Verify Installations
       run: |
         python -c "import moviepy; print('MoviePy version:', moviepy.__version__)"
+        python -c "import google.ai.generativelanguage_v1 as glm; print('Google Gemini Library Imported Successfully')"
 
     # Passo 5: Exportar Variáveis de Ambiente (Secrets)
     - name: Export Environment Variables
