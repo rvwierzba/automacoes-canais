@@ -110,27 +110,21 @@ def gerar_temas_via_gemini() -> list:
         sys.exit(1)
     
     try:
-        # Inicializa o cliente Gemini
-        client = glm.Client(api_key=api_key)
+        # Configura a API key
+        glm.configure(api_key=api_key)
         
         # Define o conteúdo para gerar temas
-        request = {
-            "model": "models/gemini-1.5-flash",
-            "prompt": "Gere uma lista de 5 temas interessantes para vídeos de YouTube",
-            "temperature": 0.7,
-            "max_output_tokens": 100
-        }
-        
+        prompt = "Gere uma lista de 5 temas interessantes para vídeos de YouTube"
         logging.info("Chamando a API do Gemini para gerar novos temas...")
-        response = client.generate_content(request)
+        response = glm.generate_text(prompt=prompt, temperature=0.7, max_output_tokens=100)
         logging.info("Resposta recebida da API Gemini.")
         
         # Extrai os temas gerados
         temas = []
-        for choice in response['choices']:
-            texto = choice['text'].strip()
+        for generation in response.generations:
+            texto = generation.text.strip()
             if texto:
-                # Assume que os temas estão separados por linhas ou vírgulas
+                # Assume que os temas estão separados por linhas
                 temas.extend([tema.strip() for tema in texto.split('\n') if tema.strip()])
         
         if not temas:
