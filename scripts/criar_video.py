@@ -116,13 +116,17 @@ def gerar_temas_via_gemini() -> list:
         # Define o conteúdo para gerar temas
         prompt = "Gere uma lista de 5 temas interessantes para vídeos de YouTube"
         logging.info("Chamando a API do Gemini para gerar novos temas...")
-        response = glm.generate_text(prompt=prompt, temperature=0.7, max_output_tokens=100)
+        response = glm.Completion.create(
+            prompt=prompt,
+            temperature=0.7,
+            max_tokens=100
+        )
         logging.info("Resposta recebida da API Gemini.")
         
         # Extrai os temas gerados
         temas = []
-        for generation in response.generations:
-            texto = generation.text.strip()
+        for choice in response.choices:
+            texto = choice.text.strip()
             if texto:
                 # Assume que os temas estão separados por linhas
                 temas.extend([tema.strip() for tema in texto.split('\n') if tema.strip()])
