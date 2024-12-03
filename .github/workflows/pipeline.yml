@@ -25,7 +25,7 @@ jobs:
       - name: Install Fonts
         run: |
           sudo apt-get update
-          sudo apt-get install -y ttf-mscorefonts-installer
+          sudo apt-get install -y ttf-dejavu
           sudo fc-cache -f -v
 
       # Passo 3: Instalar Dependências
