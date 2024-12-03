@@ -1,4 +1,4 @@
-google.generativeai
+google-cloud-generativeai
 moviepy>=2.1.1
 Pillow>=9.0.0
 python-dotenv>=0.21.0
@@ -7,4 +7,3 @@ gTTS>=2.5.4
 google-auth-oauthlib>=1.2.1
 google-api-python-client>=2.154.0
 selenium>=4.27.1
-
