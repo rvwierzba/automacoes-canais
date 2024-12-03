@@ -4,7 +4,7 @@ import json
 import logging
 from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
 import moviepy
-from google.cloud import generativeai
+import google.generativeai as genai
 from dotenv import load_dotenv
 
 # Carrega as variáveis de ambiente do arquivo .env
@@ -114,28 +114,28 @@ def gerar_temas_via_gemini() -> list:
     
     try:
         # Configura a API key
-        generativeai.init(api_key=api_key)
+        genai.configure(api_key=api_key)
+        
+        # Define o modelo
+        model = genai.GenerativeModel("gemini-1.5-flash")
         
         # Define o prompt para gerar temas
         prompt = "Gere uma lista de 5 temas interessantes para vídeos de YouTube"
         logging.info("Chamando a API do Gemini para gerar novos temas...")
         
         # Faz a requisição para gerar texto
-        response = generativeai.generate_text(
-            prompt=prompt,
-            model="models/text-bison-001",  # Certifique-se de que este modelo está disponível para sua conta
-            temperature=0.7,
-            max_output_tokens=100
-        )
+        response = model.generate_content(prompt)
         logging.info("Resposta recebida da API Gemini.")
         
         # Extrai os temas gerados
         temas = []
-        for generation in response.generations:
-            texto = generation.text.strip()
-            if texto:
-                # Assume que os temas estão separados por linhas
-                temas.extend([tema.strip() for tema in texto.split('\n') if tema.strip()])
+        texto_gerado = response.text.strip()
+        if texto_gerado:
+            # Assume que os temas estão separados por linhas ou vírgulas
+            if '\n' in texto_gerado:
+                temas = [tema.strip() for tema in texto_gerado.split('\n') if tema.strip()]
+            else:
+                temas = [tema.strip() for tema in texto_gerado.split(',') if tema.strip()]
         
         if not temas:
             logging.warning("Gemini retornou uma lista vazia de temas.")
