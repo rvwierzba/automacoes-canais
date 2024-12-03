@@ -4,7 +4,7 @@ import json
 import logging
 from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
 import moviepy
-import google.generativeai as glm
+from google.cloud import generativeai
 from dotenv import load_dotenv
 
 # Carrega as variáveis de ambiente do arquivo .env
@@ -55,10 +55,13 @@ def carregar_imagem_background(caminho_background: str) -> ImageClip:
 
 def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
     try:
-        # Chamada correta do TextClip com argumentos posicionais
-        txt_clip = TextClip(texto, 'Arial-Bold', fontsize=fontsize, color=color)
-
+        # Criação do TextClip com os parâmetros fornecidos
+        txt_clip = TextClip(texto, fontsize=fontsize, color=color, font='Arial-Bold')
+        
+        # Ajusta a posição e duração do texto
         txt_clip = txt_clip.set_position(posicao).set_duration(video_clip.duration)
+        
+        # Combina o texto com o vídeo de fundo
         composite = CompositeVideoClip([video_clip, txt_clip])
         logging.info(f"Texto '{texto}' adicionado ao vídeo na posição {posicao}.")
         return composite
@@ -111,22 +114,25 @@ def gerar_temas_via_gemini() -> list:
     
     try:
         # Configura a API key
-        glm.configure(api_key=api_key)
+        generativeai.init(api_key=api_key)
         
-        # Define o conteúdo para gerar temas
+        # Define o prompt para gerar temas
         prompt = "Gere uma lista de 5 temas interessantes para vídeos de YouTube"
         logging.info("Chamando a API do Gemini para gerar novos temas...")
-        response = glm.Completion.create(
+        
+        # Faz a requisição para gerar texto
+        response = generativeai.generate_text(
             prompt=prompt,
+            model="models/text-bison-001",  # Certifique-se de que este modelo está disponível para sua conta
             temperature=0.7,
-            max_tokens=100
+            max_output_tokens=100
         )
         logging.info("Resposta recebida da API Gemini.")
         
         # Extrai os temas gerados
         temas = []
-        for choice in response.choices:
-            texto = choice.text.strip()
+        for generation in response.generations:
+            texto = generation.text.strip()
             if texto:
                 # Assume que os temas estão separados por linhas
                 temas.extend([tema.strip() for tema in texto.split('\n') if tema.strip()])
