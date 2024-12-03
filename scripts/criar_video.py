@@ -2,7 +2,8 @@ import os
 import sys
 import json
 import logging
-from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
+import re
+from moviepy.editor import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
 import moviepy
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -53,10 +54,24 @@ def carregar_imagem_background(caminho_background: str) -> ImageClip:
         logging.error(f"Erro ao carregar a imagem de fundo: {e}")
         sys.exit(1)
 
+def limpar_texto(texto: str) -> str:
+    """
+    Remove a formatação Markdown do texto.
+    
+    :param texto: Texto com formatação Markdown.
+    :return: Texto limpo.
+    """
+    # Remove '**', '_', etc.
+    texto_limpo = re.sub(r'[\*_]', '', texto)
+    return texto_limpo
+
 def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
     try:
+        # Limpa o texto de formatação Markdown
+        texto_limpo = limpar_texto(texto)
+        
         # Criação do TextClip com os parâmetros fornecidos
-        txt_clip = TextClip(txt=texto, fontsize=fontsize, color=color, font='Arial)
+        txt_clip = TextClip(txt=texto_limpo, fontsize=fontsize, color=color, font='Arial')
         
         # Ajusta a posição e duração do texto
         txt_clip = txt_clip.set_position(posicao).set_duration(video_clip.duration)
