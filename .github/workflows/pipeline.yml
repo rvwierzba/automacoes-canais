@@ -19,7 +19,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'  # Versão do Python (ajuste conforme necessário)
+          python-version: '3.9'  # Certifique-se de que a versão do Python é compatível
 
       # Passo 3: Instalar Dependências
       - name: Install Dependencies
@@ -31,7 +31,7 @@ jobs:
       - name: Verify Installations
         run: |
           python -c "import moviepy; print('MoviePy version:', moviepy.__version__)"
-          python -c "from google.cloud import generativeai; print('Google Gemini Library Imported Successfully')"
+          python -c "import google.generativeai as genai; print('Google Gemini Library Imported Successfully')"
 
       # Passo 5: Exportar Variáveis de Ambiente (Secrets)
       - name: Export Environment Variables
