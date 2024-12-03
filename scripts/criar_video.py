@@ -56,7 +56,7 @@ def carregar_imagem_background(caminho_background: str) -> ImageClip:
 def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
     try:
         # Criação do TextClip com os parâmetros fornecidos
-        txt_clip = TextClip(texto, fontsize=fontsize, color=color, font='Arial-Bold')
+        txt_clip = TextClip(txt=texto, fontsize=fontsize, color=color, font='Arial)
         
         # Ajusta a posição e duração do texto
         txt_clip = txt_clip.set_position(posicao).set_duration(video_clip.duration)
