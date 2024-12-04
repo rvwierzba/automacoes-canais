@@ -66,11 +66,21 @@ def limpar_texto(texto: str) -> str:
     return texto_limpo
 
 def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
+    """
+    Adiciona um texto ao vídeo na posição especificada.
+    
+    :param video_clip: Clip de vídeo base.
+    :param texto: Texto a ser adicionado.
+    :param posicao: Tupla indicando a posição do texto (e.g., ('center', 'bottom')).
+    :param fontsize: Tamanho da fonte do texto.
+    :param color: Cor do texto.
+    :return: Um CompositeVideoClip com o texto adicionado.
+    """
     try:
         # Limpa o texto de formatação Markdown
         texto_limpo = limpar_texto(texto)
         
-        # Criação do TextClip sem especificar a fonte
+        # Criação do TextClip sem especificar a fonte para usar a fonte padrão
         txt_clip = TextClip(texto_limpo, fontsize=fontsize, color=color)
         
         # Ajusta a posição e duração do texto
@@ -78,13 +88,20 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
         
         # Combina o texto com o vídeo de fundo
         composite = CompositeVideoClip([video_clip, txt_clip])
-        logging.info(f"Texto '{texto}' adicionado ao vídeo na posição {posicao}.")
+        logging.info(f"Texto adicionado ao vídeo na posição {posicao}.")
         return composite
     except Exception as e:
         logging.error(f"Erro ao adicionar texto ao vídeo: {e}")
         sys.exit(1)
 
 def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> CompositeVideoClip:
+    """
+    Combina um arquivo de áudio com o vídeo.
+
+    :param video_clip: Clip de vídeo com texto.
+    :param caminho_audio: Caminho para o arquivo de áudio.
+    :return: Clip de vídeo com áudio combinado.
+    """
     if os.path.exists(caminho_audio):
         try:
             audio_clip = AudioFileClip(caminho_audio)
@@ -162,6 +179,12 @@ def gerar_temas_via_gemini() -> list:
         sys.exit(1)
 
 def carregar_temas(caminho_arquivo):
+    """
+    Carrega os temas do arquivo especificado. Se o arquivo estiver vazio, gera novos temas via Gemini.
+
+    :param caminho_arquivo: Caminho para o arquivo de temas.
+    :return: Dicionário com a lista de temas.
+    """
     caminho_absoluto = os.path.abspath(caminho_arquivo)
     logging.info(f"Caminho absoluto do arquivo de temas: {caminho_absoluto}")
     
