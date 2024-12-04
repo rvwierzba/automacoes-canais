@@ -21,13 +21,6 @@ jobs:
         with:
           python-version: '3.9'  # Certifique-se de que a versão do Python é compatível
 
-      # Passo 2.1: Instalar Fontes Necessárias
-      - name: Install Fonts
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ttf-dejavu
-          sudo fc-cache -f -v
-
       # Passo 3: Instalar Dependências
       - name: Install Dependencies
         run: |
