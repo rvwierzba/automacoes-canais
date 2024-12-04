@@ -21,31 +21,38 @@ jobs:
         with:
           python-version: '3.9'  # Certifique-se de que a versão do Python é compatível
 
-      # Passo 3: Instalar Dependências
+      # Passo 3: Instalar ImageMagick
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+        # Nenhuma variável de ambiente necessária aqui
+
+      # Passo 4: Instalar Dependências
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
 
-      # Passo 4: Verificar Instalação das Bibliotecas
+      # Passo 5: Verificar Instalação das Bibliotecas
       - name: Verify Installations
         run: |
           python -c "import moviepy; print('MoviePy version:', moviepy.__version__)"
           python -c "import google.generativeai as genai; print('Google Gemini Library Imported Successfully')"
 
-      # Passo 5: Exportar Variáveis de Ambiente (Secrets)
+      # Passo 6: Exportar Variáveis de Ambiente (Secrets)
       - name: Export Environment Variables
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           echo "GEMINI_API_KEY=${GEMINI_API_KEY}" >> $GITHUB_ENV
 
-      # Passo 6: Executar o Script de Criação de Vídeo
+      # Passo 7: Executar o Script de Criação de Vídeo
       - name: Run Video Creation Script
         run: |
           python scripts/criar_video.py
 
-      # Passo 7: Upload de Logs
+      # Passo 8: Upload de Logs
       - name: Upload Logs
         uses: actions/upload-artifact@v3
         with:
