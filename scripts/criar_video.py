@@ -70,8 +70,8 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
         # Limpa o texto de formatação Markdown
         texto_limpo = limpar_texto(texto)
         
-        # Criação do TextClip com os parâmetros fornecidos
-        txt_clip = TextClip(texto_limpo, fontsize=fontsize, color=color, font='DejaVu-Sans')
+        # Criação do TextClip sem especificar a fonte
+        txt_clip = TextClip(texto_limpo, fontsize=fontsize, color=color)
         
         # Ajusta a posição e duração do texto
         txt_clip = txt_clip.set_position(posicao).set_duration(video_clip.duration)
