@@ -67,16 +67,6 @@ def limpar_texto(texto: str) -> str:
     return texto_limpo
 
 def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
-    """
-    Adiciona um texto ao vídeo na posição especificada.
-    
-    :param video_clip: Clip de vídeo base.
-    :param texto: Texto a ser adicionado.
-    :param posicao: Tupla indicando a posição do texto (e.g., ('center', 'bottom')).
-    :param fontsize: Tamanho da fonte do texto.
-    :param color: Cor do texto.
-    :return: Um CompositeVideoClip com o texto adicionado.
-    """
     try:
         # Limpa o texto de formatação Markdown
         texto_limpo = limpar_texto(texto)
@@ -97,6 +87,7 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
     except Exception as e:
         logging.error(f"Erro inesperado ao adicionar texto ao vídeo: {e}")
         sys.exit(1)
+
 
 def gerar_audio(texto: str, caminho_audio: str):
     """
