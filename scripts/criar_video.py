@@ -90,8 +90,11 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
         composite = CompositeVideoClip([video_clip, txt_clip])
         logging.info(f"Texto adicionado ao vídeo na posição {posicao}.")
         return composite
-    except Exception as e:
+    except TypeError as e:
         logging.error(f"Erro ao adicionar texto ao vídeo: {e}")
+        sys.exit(1)
+    except Exception as e:
+        logging.error(f"Erro inesperado ao adicionar texto ao vídeo: {e}")
         sys.exit(1)
 
 def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> CompositeVideoClip:
