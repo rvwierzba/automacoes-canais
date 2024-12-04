@@ -136,43 +136,6 @@ def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> 
         logging.warning(f"Arquivo de áudio '{caminho_audio}' não encontrado. Criando vídeo sem áudio.")
         return video_clip
 
-def gerar_legendas(texto: str, caminho_legenda: str):
-    """
-    Gera um arquivo de legendas no formato SRT a partir do texto.
-
-    :param texto: Texto a ser adicionado como legenda.
-    :param caminho_legenda: Caminho onde o arquivo de legendas será salvo.
-    """
-    try:
-        legenda = f"""1
-00:00:00,000 --> 00:00:10,000
-{texto}
-
-"""
-        with open(caminho_legenda, 'w', encoding='utf-8') as f:
-            f.write(legenda)
-        logging.info(f"Legendas geradas com sucesso em '{caminho_legenda}'.")
-    except Exception as e:
-        logging.error(f"Erro ao gerar legendas: {e}")
-        sys.exit(1)
-
-def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str, caminho_legenda: str):
-    """
-    Salva o vídeo final no caminho especificado com legendas.
-
-    :param video_com_audio: Clip de vídeo com áudio.
-    :param caminho_saida: Caminho onde o vídeo será salvo.
-    :param caminho_legenda: Caminho onde as legendas serão salvas.
-    """
-    try:
-        # Garante que o diretório de saída existe
-        os.makedirs(os.path.dirname(caminho_saida), exist_ok=True)
-        video_com_audio.write_videofile(caminho_saida, codec='libx264', audio_codec='aac', subtitles=caminho_legenda)
-        logging.info(f"Vídeo salvo com sucesso em '{caminho_saida}'.")
-    except Exception as e:
-        logging.error(f"Erro ao salvar o vídeo: {e}")
-        sys.exit(1)
-
 def gerar_temas_via_gemini() -> list:
     """
     Gera uma lista de temas utilizando a API do Gemini do Google.
@@ -313,6 +276,22 @@ def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
         logging.error(f"Error selecting topic: {e}")
         sys.exit(1)
 
+def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
+    """
+    Salva o vídeo final no caminho especificado.
+
+    :param video_com_audio: Clip de vídeo com áudio.
+    :param caminho_saida: Caminho onde o vídeo será salvo.
+    """
+    try:
+        # Garante que o diretório de saída existe
+        os.makedirs(os.path.dirname(caminho_saida), exist_ok=True)
+        video_com_audio.write_videofile(caminho_saida, codec='libx264', audio_codec='aac')
+        logging.info(f"Vídeo salvo com sucesso em '{caminho_saida}'.")
+    except Exception as e:
+        logging.error(f"Erro ao salvar o vídeo: {e}")
+        sys.exit(1)
+
 def main():
     """
     Função principal que coordena a criação do vídeo.
@@ -323,7 +302,6 @@ def main():
     caminho_background = obter_caminho_absoluto('../assets/background.png')        # ../assets/background.png
     caminho_audio = obter_caminho_absoluto('../audios/audio.mp3')                # ../audios/audio.mp3
     caminho_saida = obter_caminho_absoluto('../videos/output_video.mp4')         # ../videos/output_video.mp4
-    caminho_legenda = obter_caminho_absoluto('../videos/subtitles.srt')           # ../videos/subtitles.srt
     caminho_temas_novos = obter_caminho_absoluto('../data/temas_novos.json')    # ../data/temas_novos.json
     caminho_temas_usados = obter_caminho_absoluto('../data/temas_usados.txt')    # ../data/temas_usados.txt
 
@@ -344,18 +322,13 @@ def main():
     video_com_texto = adicionar_texto(background, tema, posicao_texto)
 
     # Gera áudio a partir do texto do tema
-    caminho_audio = obter_caminho_absoluto('../audios/audio.mp3')
     gerar_audio(tema, caminho_audio)
 
     # Combina áudio com vídeo
     video_final = combinar_audio_video(video_com_texto, caminho_audio)
 
-    # Gera legendas em inglês
-    caminho_legenda = obter_caminho_absoluto('../videos/subtitles.srt')
-    gerar_legendas(tema, caminho_legenda)
-
-    # Salva o vídeo final com legendas
-    salvar_video(video_final, caminho_saida, caminho_legenda)
+    # Salva o vídeo final sem usar o parâmetro 'subtitles'
+    salvar_video(video_final, caminho_saida)
 
     logging.info("Video creation process completed successfully.")
 
