@@ -71,8 +71,16 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
         # Limpa o texto de formatação Markdown
         texto_limpo = limpar_texto(texto)
         
-        # Criação do TextClip especificando a fonte DejaVu-Sans
-        txt_clip = TextClip(texto_limpo, fontsize=fontsize, color=color, font='DejaVu-Sans')
+        # Caminho absoluto para a fonte DejaVu-Sans
+        caminho_fonte = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
+        
+        # Verifica se a fonte existe
+        if not os.path.exists(caminho_fonte):
+            logging.error(f"Fonte '{caminho_fonte}' não encontrada.")
+            sys.exit(1)
+        
+        # Criação do TextClip especificando a fonte via caminho absoluto
+        txt_clip = TextClip(txt=texto_limpo, fontsize=fontsize, color=color, font=caminho_fonte)
         
         # Ajusta a posição e duração do texto
         txt_clip = txt_clip.set_position(posicao).set_duration(video_clip.duration)
@@ -87,6 +95,7 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
     except Exception as e:
         logging.error(f"Erro inesperado ao adicionar texto ao vídeo: {e}")
         sys.exit(1)
+
 
 
 def gerar_audio(texto: str, caminho_audio: str):
