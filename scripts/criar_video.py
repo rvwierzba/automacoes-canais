@@ -70,9 +70,11 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
     try:
         # Limpa o texto de formatação Markdown
         texto_limpo = limpar_texto(texto)
+        logging.info(f"Texto limpo para adicionar: {texto_limpo}")
         
         # Caminho absoluto para a fonte DejaVu-Sans
         caminho_fonte = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
+        logging.info(f"Usando fonte: {caminho_fonte}")
         
         # Verifica se a fonte existe
         if not os.path.exists(caminho_fonte):
@@ -80,12 +82,16 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
             sys.exit(1)
         
         # Criação do TextClip especificando a fonte via caminho absoluto
+        logging.info("Criando TextClip...")
         txt_clip = TextClip(txt=texto_limpo, fontsize=fontsize, color=color, font=caminho_fonte)
+        logging.info("TextClip criado com sucesso.")
         
         # Ajusta a posição e duração do texto
         txt_clip = txt_clip.set_position(posicao).set_duration(video_clip.duration)
+        logging.info(f"TextClip posicionado em {posicao} com duração {video_clip.duration} segundos.")
         
         # Combina o texto com o vídeo de fundo
+        logging.info("Combining TextClip with background video...")
         composite = CompositeVideoClip([video_clip, txt_clip])
         logging.info(f"Texto adicionado ao vídeo na posição {posicao}.")
         return composite
