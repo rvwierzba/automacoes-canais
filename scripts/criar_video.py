@@ -96,8 +96,6 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
         logging.error(f"Erro inesperado ao adicionar texto ao vídeo: {e}")
         sys.exit(1)
 
-
-
 def gerar_audio(texto: str, caminho_audio: str):
     """
     Gera um arquivo de áudio a partir do texto usando gTTS.
