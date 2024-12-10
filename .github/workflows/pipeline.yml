@@ -30,12 +30,7 @@ jobs:
           convert -version
         shell: bash
 
-      # Passo 4: Listar Versões Disponíveis do MoviePy (Diagnóstico)
-      - name: List Available MoviePy Versions
-        run: |
-          pip install pip-search
-          pip search moviepy | grep moviepy
-        shell: bash
+      # Passo 4: Removido devido à descontinuação do pip search
 
       # Passo 5: Instalar Dependências
       - name: Install Dependencies
