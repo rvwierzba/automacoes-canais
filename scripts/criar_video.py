@@ -84,7 +84,8 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
         
         # Criação do TextClip especificando a fonte via caminho absoluto
         logging.info("Criando TextClip...")
-        txt_clip = TextClip(txt=texto_limpo, fontsize=fontsize, color=color, font=caminho_fonte)
+        # Passando 'txt' como argumento posicional
+        txt_clip = TextClip(texto_limpo, fontsize=fontsize, color=color, font=caminho_fonte)
         logging.info("TextClip criado com sucesso.")
         
         # Ajusta a posição e duração do texto
@@ -174,13 +175,13 @@ def gerar_temas_via_gemini() -> list:
             
             # Faz a requisição para gerar texto
             response = model.generate_content(
-                prompt=prompt,
+                prompt=prompt,  # Ajuste necessário conforme a assinatura correta
                 temperature=0.7,  # Controla a criatividade do texto
                 max_tokens=150     # Define o número máximo de tokens na resposta
             )
             logging.info("Resposta recebida da API Gemini.")
             
-            # Verifica se a resposta contém o texto
+            # Verifica se a resposta contém o campo 'text'
             if not hasattr(response, 'text') or not response.text:
                 logging.error("A resposta da API Gemini não contém o campo 'text' ou está vazia.")
                 raise ValueError("Resposta inválida da API Gemini.")
@@ -200,20 +201,23 @@ def gerar_temas_via_gemini() -> list:
             else:
                 logging.info(f"Temas gerados via Gemini: {temas}")
             return temas
+        except TypeError as e:
+            logging.error(f"Erro ao chamar a API Gemini na tentativa {attempt}: {e}")
         except Exception as e:
             logging.error(f"Erro ao chamar a API Gemini na tentativa {attempt}: {e}")
-            if attempt < max_retries:
-                logging.info(f"Tentando novamente em {retry_delay} segundos...")
-                time.sleep(retry_delay)
-            else:
-                logging.error("Número máximo de tentativas atingido. Utilizando temas de fallback.")
-                return [
-                    "A Ciência por Trás dos Gadgets do Cotidiano",
-                    "Computação Quântica: O Futuro da Tecnologia",
-                    "O Papel da IA na Medicina Moderna",
-                    "Inovações em Energia Renovável Transformando o Mundo",
-                    "Mistérios da Matéria Escura e Energia Escura"
-                ]
+        
+        if attempt < max_retries:
+            logging.info(f"Tentando novamente em {retry_delay} segundos...")
+            time.sleep(retry_delay)
+        else:
+            logging.error("Número máximo de tentativas atingido. Utilizando temas de fallback.")
+            return [
+                "A Ciência por Trás dos Gadgets do Cotidiano",
+                "Computação Quântica: O Futuro da Tecnologia",
+                "O Papel da IA na Medicina Moderna",
+                "Inovações em Energia Renovável Transformando o Mundo",
+                "Mistérios da Matéria Escura e Energia Escura"
+            ]
 
 def carregar_temas(caminho_arquivo):
     """
