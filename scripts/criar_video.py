@@ -3,6 +3,7 @@ import sys
 import json
 import logging
 import re
+import time
 from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
 import moviepy
 import google.generativeai as genai
@@ -91,7 +92,7 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
         logging.info(f"TextClip posicionado em {posicao} com duração {video_clip.duration} segundos.")
         
         # Combina o texto com o vídeo de fundo
-        logging.info("Combining TextClip with background video...")
+        logging.info("Combinando TextClip com o vídeo de fundo...")
         composite = CompositeVideoClip([video_clip, txt_clip])
         logging.info(f"Texto adicionado ao vídeo na posição {posicao}.")
         return composite
@@ -143,6 +144,7 @@ def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> 
 def gerar_temas_via_gemini() -> list:
     """
     Gera uma lista de temas utilizando a API do Gemini do Google.
+    Implementa retries e fallback em caso de falhas.
 
     :return: Lista de temas gerados.
     """
@@ -151,39 +153,67 @@ def gerar_temas_via_gemini() -> list:
         logging.error("GEMINI_API_KEY não está definida no arquivo .env ou nos Secrets do GitHub.")
         sys.exit(1)
     
-    try:
-        # Configura a API key
-        genai.configure(api_key=api_key)
-        
-        # Define o modelo
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        
-        # Define o prompt para gerar temas em inglês
-        prompt = "Generate a list of 5 interesting YouTube video topics related to science."
-        logging.info("Calling Gemini API to generate new topics...")
-        
-        # Faz a requisição para gerar texto
-        response = model.generate_content(prompt)
-        logging.info("Response received from Gemini API.")
-        
-        # Extrai os temas gerados
-        temas = []
-        texto_gerado = response.text.strip()
-        if texto_gerado:
-            # Assume que os temas estão separados por linhas ou vírgulas
-            if '\n' in texto_gerado:
-                temas = [tema.strip() for tema in texto_gerado.split('\n') if tema.strip()]
+    max_retries = 3
+    retry_delay = 5  # segundos
+    
+    for attempt in range(1, max_retries + 1):
+        try:
+            # Configura a API key
+            genai.configure(api_key=api_key)
+            
+            # Define o modelo
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            
+            # Define o prompt refinado para gerar temas em inglês
+            prompt = (
+                "Generate a list of 5 completely unique and original YouTube video topics related to science. "
+                "Each topic should be innovative, not replicate any existing content, and fully comply with copyright laws. "
+                "Avoid any direct references or similarities to existing materials."
+            )
+            logging.info("Chamando a API Gemini para gerar novos temas...")
+            
+            # Faz a requisição para gerar texto
+            response = model.generate_content(
+                prompt=prompt,
+                temperature=0.7,  # Controla a criatividade do texto
+                max_tokens=150     # Define o número máximo de tokens na resposta
+            )
+            logging.info("Resposta recebida da API Gemini.")
+            
+            # Verifica se a resposta contém o texto
+            if not hasattr(response, 'text') or not response.text:
+                logging.error("A resposta da API Gemini não contém o campo 'text' ou está vazia.")
+                raise ValueError("Resposta inválida da API Gemini.")
+            
+            # Extrai os temas gerados
+            temas = []
+            texto_gerado = response.text.strip()
+            if texto_gerado:
+                # Assume que os temas estão separados por linhas ou vírgulas
+                if '\n' in texto_gerado:
+                    temas = [tema.strip() for tema in texto_gerado.split('\n') if tema.strip()]
+                else:
+                    temas = [tema.strip() for tema in texto_gerado.split(',') if tema.strip()]
+            
+            if not temas:
+                logging.warning("A API Gemini retornou uma lista vazia de temas.")
             else:
-                temas = [tema.strip() for tema in texto_gerado.split(',') if tema.strip()]
-        
-        if not temas:
-            logging.warning("Gemini returned an empty list of topics.")
-        else:
-            logging.info(f"Topics generated via Gemini: {temas}")
-        return temas
-    except Exception as e:
-        logging.error(f"Error calling Gemini API: {e}")
-        sys.exit(1)
+                logging.info(f"Temas gerados via Gemini: {temas}")
+            return temas
+        except Exception as e:
+            logging.error(f"Erro ao chamar a API Gemini na tentativa {attempt}: {e}")
+            if attempt < max_retries:
+                logging.info(f"Tentando novamente em {retry_delay} segundos...")
+                time.sleep(retry_delay)
+            else:
+                logging.error("Número máximo de tentativas atingido. Utilizando temas de fallback.")
+                return [
+                    "A Ciência por Trás dos Gadgets do Cotidiano",
+                    "Computação Quântica: O Futuro da Tecnologia",
+                    "O Papel da IA na Medicina Moderna",
+                    "Inovações em Energia Renovável Transformando o Mundo",
+                    "Mistérios da Matéria Escura e Energia Escura"
+                ]
 
 def carregar_temas(caminho_arquivo):
     """
@@ -193,27 +223,27 @@ def carregar_temas(caminho_arquivo):
     :return: Dicionário com a lista de temas.
     """
     caminho_absoluto = os.path.abspath(caminho_arquivo)
-    logging.info(f"Absolute path of themes file: {caminho_absoluto}")
+    logging.info(f"Caminho absoluto do arquivo de temas: {caminho_absoluto}")
     
     if not os.path.exists(caminho_arquivo):
-        logging.error(f"Themes file '{caminho_arquivo}' not found.")
+        logging.error(f"Arquivo de temas '{caminho_arquivo}' não encontrado.")
         sys.exit(1)
     
     with open(caminho_arquivo, 'r', encoding='utf-8') as f:
         conteudo = f.read().strip()
-        logging.info(f"Themes file content: {conteudo}")  # Log do conteúdo
+        logging.info(f"Conteúdo do arquivo de temas: {conteudo}")  # Log do conteúdo
         try:
             if not conteudo:
-                logging.warning(f"Themes file '{caminho_arquivo}' is empty. Generating new topics via Gemini.")
+                logging.warning(f"Arquivo de temas '{caminho_arquivo}' está vazio. Gerando novos temas via Gemini.")
                 temas = gerar_temas_via_gemini()
                 atualizar_temas(caminho_arquivo, temas)
                 return {"temas": temas}
             data = json.loads(conteudo)
-            logging.info(f"Data loaded from JSON: {data}")  # Log dos dados carregados
+            logging.info(f"Dados carregados do JSON: {data}")  # Log dos dados carregados
 
             temas = data.get("temas", [])
             if not temas:
-                logging.warning(f"Topics list in file '{caminho_arquivo}' is empty. Generating new topics via Gemini.")
+                logging.warning(f"Lista de temas no arquivo '{caminho_arquivo}' está vazia. Gerando novos temas via Gemini.")
                 temas = gerar_temas_via_gemini()
                 atualizar_temas(caminho_arquivo, temas)
                 data["temas"] = temas
@@ -221,7 +251,7 @@ def carregar_temas(caminho_arquivo):
 
             return data
         except json.JSONDecodeError as e:
-            logging.error(f"JSON decode error in themes file: {e}")
+            logging.error(f"Erro de decodificação JSON no arquivo de temas: {e}")
             sys.exit(1)
 
 def atualizar_temas(caminho_arquivo: str, novos_temas: list):
@@ -234,9 +264,9 @@ def atualizar_temas(caminho_arquivo: str, novos_temas: list):
     try:
         with open(caminho_arquivo, 'w', encoding='utf-8') as f:
             json.dump({"temas": novos_temas}, f, indent=2, ensure_ascii=False)
-        logging.info(f"Themes file '{caminho_arquivo}' updated with new topics.")
+        logging.info(f"Arquivo de temas '{caminho_arquivo}' atualizado com novos temas.")
     except Exception as e:
-        logging.error(f"Error updating themes file: {e}")
+        logging.error(f"Erro ao atualizar o arquivo de temas: {e}")
         sys.exit(1)
 
 def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
@@ -250,34 +280,34 @@ def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
     try:
         with open(caminho_temas_novos, 'r', encoding='utf-8') as f_novos:
             data = json.load(f_novos)
-            logging.info(f"Data loaded from new themes JSON: {data}")
+            logging.info(f"Dados carregados do JSON de novos temas: {data}")
         
         temas = data.get("temas", [])
-        logging.info(f"Available topics: {temas}")
+        logging.info(f"Temas disponíveis: {temas}")
         
         if not temas:
-            logging.warning("No topics available to process.")
+            logging.warning("Nenhum tema disponível para processar.")
             return None
         
         tema = temas.pop(0)
-        logging.info(f"Selected topic: '{tema}'")
+        logging.info(f"Tema selecionado: '{tema}'")
         
         # Escreve o tema usado no arquivo de temas usados
         with open(caminho_temas_usados, 'a', encoding='utf-8') as f_usados:
             f_usados.write(json.dumps({"tema": tema}, ensure_ascii=False) + '\n')
-            logging.info(f"Topic '{tema}' written to '{caminho_temas_usados}'.")
+            logging.info(f"Tema '{tema}' escrito no arquivo '{caminho_temas_usados}'.")
         
         # Atualiza o arquivo de novos temas
         with open(caminho_temas_novos, 'w', encoding='utf-8') as f_novos_write:
             json.dump({"temas": temas}, f_novos_write, indent=2, ensure_ascii=False)
-            logging.info(f"New themes file updated at '{caminho_temas_novos}'.")
+            logging.info(f"Arquivo de novos temas atualizado em '{caminho_temas_novos}'.")
         
         return tema
     except json.JSONDecodeError as e:
-        logging.error(f"JSON decode error in new themes file: {e}")
+        logging.error(f"Erro de decodificação JSON no arquivo de novos temas: {e}")
         sys.exit(1)
     except Exception as e:
-        logging.error(f"Error selecting topic: {e}")
+        logging.error(f"Erro ao selecionar o tema: {e}")
         sys.exit(1)
 
 def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
@@ -300,8 +330,8 @@ def main():
     """
     Função principal que coordena a criação do vídeo.
     """
-    logging.info("Starting video creation process...")
-
+    logging.info("Iniciando o processo de criação de vídeo...")
+    
     # Defina os caminhos corretos para os arquivos usando caminhos absolutos
     caminho_background = obter_caminho_absoluto('../assets/background.png')        # ../assets/background.png
     caminho_audio = obter_caminho_absoluto('../audios/audio.mp3')                # ../audios/audio.mp3
@@ -315,7 +345,7 @@ def main():
     # Seleciona um tema
     tema = selecionar_tema(caminho_temas_novos, caminho_temas_usados)
     if not tema:
-        logging.error("No topics available to create the video. Exiting script.")
+        logging.error("Nenhum tema disponível para criar o vídeo. Encerrando o script.")
         sys.exit(1)
 
     # Carrega a imagem de fundo
@@ -331,10 +361,10 @@ def main():
     # Combina áudio com vídeo
     video_final = combinar_audio_video(video_com_texto, caminho_audio)
 
-    # Salva o vídeo final sem usar o parâmetro 'subtitles'
+    # Salva o vídeo final
     salvar_video(video_final, caminho_saida)
 
-    logging.info("Video creation process completed successfully.")
+    logging.info("Processo de criação de vídeo concluído com sucesso.")
 
 if __name__ == "__main__":
     main()
