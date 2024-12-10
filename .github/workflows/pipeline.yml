@@ -30,13 +30,21 @@ jobs:
           convert -version
         shell: bash
 
-      # Passo 4: Instalar Dependências
+      # Passo 4: Listar Versões Disponíveis do MoviePy (Diagnóstico)
+      - name: List Available MoviePy Versions
+        run: |
+          pip install pip-search
+          pip search moviepy | grep moviepy
+        shell: bash
+
+      # Passo 5: Instalar Dependências
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir -r requirements.txt --index-url https://pypi.org/simple
+        shell: bash
 
-      # Passo 5: Verificar Instalação das Bibliotecas
+      # Passo 6: Verificar Instalação das Bibliotecas
       - name: Verify Installations
         run: |
           python -c "import moviepy; print('MoviePy version:', moviepy.__version__)"
@@ -44,20 +52,20 @@ jobs:
           convert -version  # Verifica novamente a instalação do ImageMagick
         shell: bash
 
-      # Passo 6: Exportar Variáveis de Ambiente (Secrets)
+      # Passo 7: Exportar Variáveis de Ambiente (Secrets)
       - name: Export Environment Variables
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           echo "GEMINI_API_KEY=${GEMINI_API_KEY}" >> $GITHUB_ENV
 
-      # Passo 7: Executar o Script de Criação de Vídeo
+      # Passo 8: Executar o Script de Criação de Vídeo
       - name: Run Video Creation Script
         run: |
           python scripts/criar_video.py
         shell: bash
 
-      # Passo 8: Upload de Logs
+      # Passo 9: Upload de Logs
       - name: Upload Logs
         uses: actions/upload-artifact@v3
         with:
