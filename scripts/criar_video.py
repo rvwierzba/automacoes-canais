@@ -4,7 +4,7 @@ import json
 import logging
 import re
 import time
-from moviepy.editor import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
+from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
 import moviepy
 import google.generativeai as genai
 from dotenv import load_dotenv
