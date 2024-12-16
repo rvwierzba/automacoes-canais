@@ -5,7 +5,7 @@ import logging
 import re
 import time
 from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
-import moviepy
+import moviepy.editor as mpe
 import google.generativeai as genai
 from dotenv import load_dotenv
 from gtts import gTTS
@@ -45,18 +45,15 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
                 logging.warning("Fontes padrão não encontradas. Usando fonte padrão do MoviePy.")
                 fonte = None
 
-        logging.info("Criando TextClip...")
         txt_clip = TextClip(
             texto_limpo,
             fontsize=fontsize,
             color=color,
             font=fonte,
-            method='caption'  # Importante para quebras de linha
+            method='caption'
         ).set_position(posicao).set_duration(video_clip.duration)
-        logging.info("TextClip criado e posicionado.")
 
         composite = CompositeVideoClip([video_clip, txt_clip])
-        logging.info(f"Texto adicionado ao vídeo na posição {posicao}.")
         return composite
     except Exception as e:
         logging.error(f"Erro ao adicionar texto: {e}")
@@ -64,7 +61,7 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
 
 def gerar_audio(texto: str, caminho_audio: str):
     try:
-        tts = gTTS(text=texto, lang='en')
+        tts = gTTS(text=texto, lang='pt-br') # Mudança para Português Brasileiro
         tts.save(caminho_audio)
         logging.info(f"Áudio gerado em: {caminho_audio}")
     except Exception as e:
@@ -77,7 +74,6 @@ def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> 
             audio_clip = AudioFileClip(caminho_audio)
             audio_clip = audio_clip.set_duration(video_clip.duration)
             video_com_audio = video_clip.set_audio(audio_clip)
-            logging.info(f"Áudio combinado com o vídeo.")
             return video_com_audio
         except Exception as e:
             logging.error(f"Erro ao combinar áudio/vídeo: {e}")
@@ -105,7 +101,6 @@ def gerar_temas_via_gemini() -> list:
 
         temas = response.text.strip().split('\n')
         temas = [t.strip() for t in temas if t.strip()]
-        logging.info(f"Temas gerados: {temas}")
         return temas
 
     except Exception as e:
@@ -144,12 +139,10 @@ def carregar_temas(caminho_arquivo):
         logging.error(f"Arquivo não encontrado: {caminho_arquivo}")
         sys.exit(1)
 
-
 def atualizar_temas(caminho_arquivo: str, novos_temas: list):
     try:
         with open(caminho_arquivo, 'w', encoding='utf-8') as f:
             json.dump({"temas": novos_temas}, f, indent=2, ensure_ascii=False)
-        logging.info(f"Arquivo atualizado: {caminho_arquivo}")
     except Exception as e:
         logging.error(f"Erro ao atualizar arquivo: {e}")
         sys.exit(1)
@@ -178,4 +171,17 @@ def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
         logging.error("Arquivo não encontrado.")
         sys.exit(1)
 
-def salvar_video(video_com_audio: CompositeVideo
+def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
+    try:
+        os.makedirs(os.path.dirname(caminho_saida), exist_ok=True)
+        video_com_audio.write_videofile(caminho_saida, codec='libx264', audio_codec='aac', fps=24) # Adicionado fps
+        logging.info(f"Vídeo salvo em: {caminho_saida}")
+    except Exception as e:
+        logging.error(f"Erro ao salvar o vídeo: {e}")
+        sys.exit(1)
+
+
+def main():
+    try:
+        # Caminhos
+        caminho_imagem = obter_caminho_absoluto("imagens/
