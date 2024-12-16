@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from gtts import gTTS
 from PIL import ImageFont
 
-# Carrega as variáveis de ambiente
+# Carrega variáveis de ambiente
 load_dotenv()
 
 # Configuração de logging
@@ -29,8 +29,7 @@ def obter_caminho_absoluto(relativo):
     return os.path.normpath(os.path.join(script_dir, relativo))
 
 def limpar_texto(texto: str) -> str:
-    texto_limpo = re.sub(r'[\*_]', '', texto)
-    return texto_limpo
+    return re.sub(r'[\*_]', '', texto)
 
 def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
     try:
@@ -52,7 +51,7 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
             fontsize=fontsize,
             color=color,
             font=fonte,
-            method='caption'
+            method='caption'  # Importante para quebras de linha
         ).set_position(posicao).set_duration(video_clip.duration)
         logging.info("TextClip criado e posicionado.")
 
@@ -121,9 +120,9 @@ def gerar_temas_via_gemini() -> list:
 
 def carregar_temas(caminho_arquivo):
     if not os.path.exists(caminho_arquivo):
-      logging.error(f"Arquivo '{caminho_arquivo}' não encontrado.")
-      sys.exit(1)
-      
+        logging.error(f"Arquivo '{caminho_arquivo}' não encontrado.")
+        sys.exit(1)
+    
     try:
         with open(caminho_arquivo, 'r', encoding='utf-8') as f:
             conteudo = f.read().strip()
@@ -142,8 +141,9 @@ def carregar_temas(caminho_arquivo):
         atualizar_temas(caminho_arquivo, temas)
         return {"temas": temas}
     except FileNotFoundError:
-        logging.error(f"Arquivo não encontrado {caminho_arquivo}")
+        logging.error(f"Arquivo não encontrado: {caminho_arquivo}")
         sys.exit(1)
+
 
 def atualizar_temas(caminho_arquivo: str, novos_temas: list):
     try:
@@ -178,10 +178,4 @@ def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
         logging.error("Arquivo não encontrado.")
         sys.exit(1)
 
-def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
-    try:
-        os.makedirs(os.path.dirname(caminho_saida), exist_ok=True)
-        video_com_audio.write_videofile(caminho_saida, codec='libx264', audio_codec='aac')
-        logging.info(f"Vídeo salvo em: {caminho_saida}")
-    except Exception as e:
-        logging.error(f"Erro
+def salvar_video(video_com_audio: CompositeVideo
