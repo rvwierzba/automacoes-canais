@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from gtts import gTTS
 from PIL import ImageFont
 
-# Configurações
+# Configurações (mantidas e melhoradas)
 load_dotenv()
 LOG_FILE = 'criar_video.log'
 OUTPUT_VIDEO_DIR = "videos"
@@ -18,8 +18,9 @@ OUTPUT_AUDIO_DIR = "audio"
 IMAGES_DIR = "imagens"
 TEMAS_NOVOS_FILE = "temas_novos.json"
 TEMAS_USADOS_FILE = "temas_usados.json"
+DEFAULT_IMAGE = "background.jpg" # nome da imagem padrão, caso não encontre outra.
 
-# Configuração de logging
+# Configuração de logging (mantida)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -48,20 +49,20 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
                 logging.warning("Fontes padrão não encontradas. Usando fonte padrão do MoviePy.")
                 fonte = None
         txt_clip = TextClip(texto_limpo, fontsize=fontsize, color=color, font=fonte, method='caption').set_position(posicao).set_duration(video_clip.duration)
-        composite = CompositeVideoClip([video_clip, txt_clip])
-        return composite
+        return CompositeVideoClip([video_clip, txt_clip])
     except Exception as e:
         logging.error(f"Erro ao adicionar texto: {e}")
-        return video_clip # Retorna o vídeo original em caso de erro
+        return video_clip  # Retorna o video original, para evitar que o programa quebre.
 
 def gerar_audio(texto: str, caminho_audio: str):
     try:
         tts = gTTS(text=texto, lang='pt-br')
         tts.save(caminho_audio)
         logging.info(f"Áudio gerado em: {caminho_audio}")
+        return True #Retorna True se o áudio for gerado.
     except Exception as e:
         logging.error(f"Erro ao gerar áudio: {e}")
-        return None # Indica falha na geração do áudio
+        return False #Retorna False se o áudio não for gerado.
 
 def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> CompositeVideoClip:
     if not os.path.exists(caminho_audio):
@@ -78,7 +79,7 @@ def gerar_temas_via_gemini() -> list:
     api_key = os.getenv('GEMINI_API_KEY')
     if not api_key:
         logging.error("GEMINI_API_KEY não definida.")
-        return None  # Retorna None em caso de falha
+        return None
 
     prompt = ("Gere uma lista de 5 tópicos de vídeo do YouTube completamente únicos e originais relacionados à ciência. "
                 "Cada tópico deve ser inovador, não replicar nenhum conteúdo existente e estar em total conformidade com as leis de direitos autorais. "
@@ -91,13 +92,13 @@ def gerar_temas_via_gemini() -> list:
         return temas
     except Exception as e:
         logging.error(f"Erro na API Gemini: {e}")
-        return None # Retorna None em caso de falha
+        return None
 
 def carregar_temas(caminho_arquivo):
     try:
         with open(caminho_arquivo, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            return data.get("temas", [])  # Retorna uma lista vazia se "temas" não existir
+            return data.get("temas", [])
     except (FileNotFoundError, json.JSONDecodeError):
         logging.warning(f"Arquivo {caminho_arquivo} não encontrado ou inválido. Gerando novos temas.")
         return []
@@ -133,7 +134,12 @@ def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
 
 def main():
     try:
-        caminho_imagem = obter_caminho_absoluto(os.path.join(IMAGES_DIR,"background.jpg"))
+        caminho_imagem = obter_caminho_absoluto(os.path.join(IMAGES_DIR, DEFAULT_IMAGE))
+
+        if not os.path.exists(caminho_imagem):
+            logging.error(f"Imagem padrão não encontrada: {caminho_imagem}")
+            return # Para a execução caso a imagem não seja encontrada.
+
         caminho_audio = obter_caminho_absoluto(os.path.join(OUTPUT_AUDIO_DIR, "audio.mp3"))
         caminho_video_saida = obter_caminho_absoluto(os.path.join(OUTPUT_VIDEO_DIR, "video_final.mp4"))
         caminho_temas_novos = obter_caminho_absoluto(TEMAS_NOVOS_FILE)
@@ -148,10 +154,3 @@ def main():
         if not gerar_audio(tema, caminho_audio):
           logging.error("Falha ao gerar áudio. Abortando")
           return
-        
-        if not os.path.exists(caminho_imagem):
-          logging.error(f"Imagem não encontrada: {caminho_imagem}")
-          return
-
-        video_clip = ImageClip(caminho_imagem).set_duration(5)
-        video_
