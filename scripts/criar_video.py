@@ -4,7 +4,7 @@ import json
 import logging
 import re
 from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
-import moviepy.editor as mpe  # Mantido para evitar possíveis problemas futuros
+import moviepy as mpe  # Mantido para evitar possíveis problemas futuros
 import google.generativeai as genai
 from dotenv import load_dotenv
 from gtts import gTTS
