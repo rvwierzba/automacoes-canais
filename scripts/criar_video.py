@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from gtts import gTTS
 from PIL import ImageFont
 
-# Configurações
+# Configurações (adapte conforme necessário)
 load_dotenv()
 LOG_FILE = 'criar_video.log'
 OUTPUT_VIDEO_DIR = "videos"
@@ -150,8 +150,7 @@ def main():
             logging.error("Falha ao gerar áudio. Abortando")
             return
 
-        video_clip = ImageClip(caminho_imagem).set_duration(5) # Linha corrigida!
+        video_clip = ImageClip(caminho_imagem).set_duration(5)
 
         video_com_texto = adicionar_texto(video_clip, tema, ('center', 'center'))
-        video_com_audio = combinar_audio_video(video_com_texto, caminho_audio)
-        salvar
+        video_com_audio = combinar_audio_video(video_com_
