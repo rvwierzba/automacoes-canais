@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from gtts import gTTS
 from PIL import ImageFont
 
-# Configurações (mantidas e melhoradas)
+# Configurações
 load_dotenv()
 LOG_FILE = 'criar_video.log'
 OUTPUT_VIDEO_DIR = "videos"
@@ -18,9 +18,9 @@ OUTPUT_AUDIO_DIR = "audio"
 IMAGES_DIR = "imagens"
 TEMAS_NOVOS_FILE = "temas_novos.json"
 TEMAS_USADOS_FILE = "temas_usados.json"
-DEFAULT_IMAGE = "background.jpg" # nome da imagem padrão, caso não encontre outra.
+DEFAULT_IMAGE = "background.jpg"
 
-# Configuração de logging (mantida)
+# Configuração de logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -52,17 +52,17 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
         return CompositeVideoClip([video_clip, txt_clip])
     except Exception as e:
         logging.error(f"Erro ao adicionar texto: {e}")
-        return video_clip  # Retorna o video original, para evitar que o programa quebre.
+        return video_clip
 
 def gerar_audio(texto: str, caminho_audio: str):
     try:
         tts = gTTS(text=texto, lang='pt-br')
         tts.save(caminho_audio)
         logging.info(f"Áudio gerado em: {caminho_audio}")
-        return True #Retorna True se o áudio for gerado.
+        return True
     except Exception as e:
         logging.error(f"Erro ao gerar áudio: {e}")
-        return False #Retorna False se o áudio não for gerado.
+        return False
 
 def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> CompositeVideoClip:
     if not os.path.exists(caminho_audio):
@@ -138,7 +138,7 @@ def main():
 
         if not os.path.exists(caminho_imagem):
             logging.error(f"Imagem padrão não encontrada: {caminho_imagem}")
-            return # Para a execução caso a imagem não seja encontrada.
+            return
 
         caminho_audio = obter_caminho_absoluto(os.path.join(OUTPUT_AUDIO_DIR, "audio.mp3"))
         caminho_video_saida = obter_caminho_absoluto(os.path.join(OUTPUT_VIDEO_DIR, "video_final.mp4"))
@@ -152,5 +152,7 @@ def main():
             return
 
         if not gerar_audio(tema, caminho_audio):
-          logging.error("Falha ao gerar áudio. Abortando")
-          return
+            logging.error("Falha ao gerar áudio. Abortando")
+            return
+
+        video_clip = Image
