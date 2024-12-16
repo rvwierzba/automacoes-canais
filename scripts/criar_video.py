@@ -9,37 +9,53 @@ import moviepy
 import google.generativeai as genai
 from dotenv import load_dotenv
 from gtts import gTTS
-from PIL import ImageFont  # Importe a biblioteca Pillow para manipulação de fontes
+from PIL import ImageFont
 
-# ... (restante das importações e configuração de logging como antes)
+# Carrega as variáveis de ambiente
+load_dotenv()
+
+# Configuração de logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('criar_video.log', mode='a')
+    ]
+)
+
+def obter_caminho_absoluto(relativo):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    return os.path.normpath(os.path.join(script_dir, relativo))
+
+def limpar_texto(texto: str) -> str:
+    texto_limpo = re.sub(r'[\*_]', '', texto)
+    return texto_limpo
 
 def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
-    """Adiciona texto ao vídeo. Correção no tratamento de fontes."""
     try:
         texto_limpo = limpar_texto(texto)
         logging.info(f"Texto limpo: {texto_limpo}")
 
-        # Carrega a fonte usando PIL
         try:
-            # Tente carregar uma fonte padrão (funciona na maioria dos sistemas)
             fonte = ImageFont.truetype("arial.ttf", fontsize)
         except OSError:
             try:
-                # Tente outra fonte padrão
-                fonte = ImageFont.truetype("DejaVuSans.ttf", fontsize) #Essa fonte sempre funciona
+                fonte = ImageFont.truetype("DejaVuSans.ttf", fontsize)
             except OSError:
                 logging.warning("Fontes padrão não encontradas. Usando fonte padrão do MoviePy.")
-                fonte = None  # Deixa o MoviePy usar a fonte padrão interna
-        
+                fonte = None
+
         logging.info("Criando TextClip...")
         txt_clip = TextClip(
             texto_limpo,
             fontsize=fontsize,
             color=color,
-            font=fonte,  # Passa o objeto Font do PIL, ou None
+            font=fonte,
+            method='caption'
         ).set_position(posicao).set_duration(video_clip.duration)
         logging.info("TextClip criado e posicionado.")
-        
+
         composite = CompositeVideoClip([video_clip, txt_clip])
         logging.info(f"Texto adicionado ao vídeo na posição {posicao}.")
         return composite
@@ -47,15 +63,36 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
         logging.error(f"Erro ao adicionar texto: {e}")
         sys.exit(1)
 
-# ... (funções gerar_audio, combinar_audio_video, carregar_temas, atualizar_temas, selecionar_tema, salvar_video como antes)
+def gerar_audio(texto: str, caminho_audio: str):
+    try:
+        tts = gTTS(text=texto, lang='en')
+        tts.save(caminho_audio)
+        logging.info(f"Áudio gerado em: {caminho_audio}")
+    except Exception as e:
+        logging.error(f"Erro ao gerar áudio: {e}")
+        sys.exit(1)
+
+def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> CompositeVideoClip:
+    if os.path.exists(caminho_audio):
+        try:
+            audio_clip = AudioFileClip(caminho_audio)
+            audio_clip = audio_clip.set_duration(video_clip.duration)
+            video_com_audio = video_clip.set_audio(audio_clip)
+            logging.info(f"Áudio combinado com o vídeo.")
+            return video_com_audio
+        except Exception as e:
+            logging.error(f"Erro ao combinar áudio/vídeo: {e}")
+            sys.exit(1)
+    else:
+        logging.warning(f"Áudio não encontrado: {caminho_audio}")
+        return video_clip
 
 def gerar_temas_via_gemini() -> list:
-    """Gera temas usando a API Gemini. Correção na chamada da API."""
     api_key = os.getenv('GEMINI_API_KEY')
     if not api_key:
         logging.error("GEMINI_API_KEY não definida.")
         sys.exit(1)
-    
+
     prompt = (
         "Gere uma lista de 5 tópicos de vídeo do YouTube completamente únicos e originais relacionados à ciência. "
         "Cada tópico deve ser inovador, não replicar nenhum conteúdo existente e estar em total conformidade com as leis de direitos autorais. "
@@ -64,10 +101,9 @@ def gerar_temas_via_gemini() -> list:
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-pro')  # Usando o modelo 'gemini-pro'
-        
-        response = model.generate_content(prompt=prompt)  # Chamada simplificada
-        
+        model = genai.GenerativeModel('gemini-pro')
+        response = model.generate_content(prompt)
+
         temas = response.text.strip().split('\n')
         temas = [t.strip() for t in temas if t.strip()]
         logging.info(f"Temas gerados: {temas}")
@@ -82,4 +118,70 @@ def gerar_temas_via_gemini() -> list:
             "Inovações em Energia Renovável Transformando o Mundo",
             "Mistérios da Matéria Escura e Energia Escura"
         ]
-#... (função main como antes)
+
+def carregar_temas(caminho_arquivo):
+    if not os.path.exists(caminho_arquivo):
+      logging.error(f"Arquivo '{caminho_arquivo}' não encontrado.")
+      sys.exit(1)
+      
+    try:
+        with open(caminho_arquivo, 'r', encoding='utf-8') as f:
+            conteudo = f.read().strip()
+            if not conteudo:
+                logging.warning(f"Arquivo vazio. Gerando temas via Gemini.")
+                temas = gerar_temas_via_gemini()
+                atualizar_temas(caminho_arquivo, temas)
+                return {"temas": temas}
+
+            data = json.loads(conteudo)
+            return data
+
+    except json.JSONDecodeError:
+        logging.error(f"Erro ao decodificar JSON em {caminho_arquivo}. Gerando temas via Gemini.")
+        temas = gerar_temas_via_gemini()
+        atualizar_temas(caminho_arquivo, temas)
+        return {"temas": temas}
+    except FileNotFoundError:
+        logging.error(f"Arquivo não encontrado {caminho_arquivo}")
+        sys.exit(1)
+
+def atualizar_temas(caminho_arquivo: str, novos_temas: list):
+    try:
+        with open(caminho_arquivo, 'w', encoding='utf-8') as f:
+            json.dump({"temas": novos_temas}, f, indent=2, ensure_ascii=False)
+        logging.info(f"Arquivo atualizado: {caminho_arquivo}")
+    except Exception as e:
+        logging.error(f"Erro ao atualizar arquivo: {e}")
+        sys.exit(1)
+
+def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
+    try:
+        with open(caminho_temas_novos, 'r', encoding='utf-8') as f_novos:
+            data = json.load(f_novos)
+        
+        temas = data.get("temas", [])
+        if not temas:
+            logging.warning("Nenhum tema disponível.")
+            return None
+        
+        tema = temas.pop(0)
+        
+        with open(caminho_temas_usados, 'a', encoding='utf-8') as f_usados:
+            f_usados.write(json.dumps({"tema": tema}, ensure_ascii=False) + '\n')
+
+        atualizar_temas(caminho_temas_novos, temas)
+        return tema
+    except json.JSONDecodeError:
+        logging.error("Erro ao decodificar JSON.")
+        sys.exit(1)
+    except FileNotFoundError:
+        logging.error("Arquivo não encontrado.")
+        sys.exit(1)
+
+def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
+    try:
+        os.makedirs(os.path.dirname(caminho_saida), exist_ok=True)
+        video_com_audio.write_videofile(caminho_saida, codec='libx264', audio_codec='aac')
+        logging.info(f"Vídeo salvo em: {caminho_saida}")
+    except Exception as e:
+        logging.error(f"Erro
