@@ -40,7 +40,7 @@ def limpar_texto(texto: str) -> str:
 def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
     """
     Adiciona texto ao vídeo usando TextClip.
-    Ajustes feitos para evitar conflito no argumento 'font' e uso de 'txt='.
+    Removido o 'method' para evitar conflito com 'font'.
     """
     try:
         texto_limpo = limpar_texto(texto)
@@ -50,15 +50,13 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
         fonte = "DejaVu-Sans"
         logging.info(f"Usando fonte: {fonte}")
         
-        # Criação do TextClip com argumentos adequados
         logging.info("Criando TextClip...")
-        # Usando 'method=caption' para lidar melhor com fontes e quebras de linha
+        # Removido o method='caption'
         txt_clip = TextClip(
             texto_limpo,
             fontsize=fontsize,
             color=color,
-            font=fonte,
-            method='caption'
+            font=fonte
         )
         logging.info("TextClip criado com sucesso.")
         
@@ -109,8 +107,7 @@ def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> 
 def gerar_temas_via_gemini() -> list:
     """
     Gera uma lista de temas utilizando a API do Gemini do Google.
-    Ajuste feito na chamada da API para não usar 'prompt' explicitamente,
-    seguindo a estrutura recomendada.
+    Agora utilizando genai.generate_text de forma adequada.
     """
     api_key = os.getenv('GEMINI_API_KEY')
     if not api_key:
@@ -129,32 +126,20 @@ def gerar_temas_via_gemini() -> list:
     for attempt in range(1, max_retries + 1):
         try:
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
             
             logging.info("Chamando a API Gemini para gerar novos temas...")
-            
-            # Ajuste da chamada conforme documentação da API Gemini
-            response = model.generate_content({
-                "model": "models/gemini-1.5-flash",
-                "contents": [
-                    {
-                        "role": "user",
-                        "parts": [
-                            {"text": prompt}
-                        ]
-                    }
-                ],
-                "temperature": 0.7,
-                "max_tokens": 150
-            })
-            
-            logging.info("Resposta recebida da API Gemini.")
-            
-            if not hasattr(response, 'text') or not response.text:
-                logging.error("A resposta da API Gemini não contém o campo 'text' ou está vazia.")
+            response = genai.generate_text(
+                model="models/gemini-1.5-flash",
+                prompt=prompt,
+                temperature=0.7,
+                max_output_tokens=150
+            )
+
+            if not response.candidates:
+                logging.error("A resposta da API não contém candidatos.")
                 raise ValueError("Resposta inválida da API Gemini.")
             
-            texto_gerado = response.text.strip()
+            texto_gerado = response.candidates[0].output.strip()
             temas = []
             if texto_gerado:
                 if '\n' in texto_gerado:
