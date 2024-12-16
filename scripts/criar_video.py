@@ -6,7 +6,7 @@ import re
 import time
 from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
 import moviepy
-import google.generativeai as genai
+import google.generativeai as palm
 from dotenv import load_dotenv
 from gtts import gTTS
 
@@ -24,43 +24,27 @@ logging.basicConfig(
 )
 
 def obter_caminho_absoluto(relativo):
-    """
-    Converte um caminho relativo para absoluto baseado na localização do script.
-    """
     script_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.normpath(os.path.join(script_dir, relativo))
 
 def limpar_texto(texto: str) -> str:
-    """
-    Remove a formatação Markdown do texto (**, _, etc.).
-    """
-    texto_limpo = re.sub(r'[\*_]', '', texto)
-    return texto_limpo
+    return re.sub(r'[\*_]', '', texto)
 
 def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
-    """
-    Adiciona texto ao vídeo usando TextClip.
-    Removido o 'method' para evitar conflito com 'font'.
-    """
     try:
         texto_limpo = limpar_texto(texto)
         logging.info(f"Texto limpo para adicionar: {texto_limpo}")
         
-        # Utilize um nome de fonte reconhecido pelo ImageMagick
-        fonte = "DejaVu-Sans"
-        logging.info(f"Usando fonte: {fonte}")
-        
         logging.info("Criando TextClip...")
-        # Removido o method='caption'
+        # Tente sem especificar 'font' caso haja conflito.
         txt_clip = TextClip(
             texto_limpo,
             fontsize=fontsize,
-            color=color,
-            font=fonte
+            color=color
+            # ,font="DejaVu-Sans"  # Descomente se quiser tentar especificar a fonte
         )
         logging.info("TextClip criado com sucesso.")
         
-        # Ajusta a posição e duração do texto
         txt_clip = txt_clip.set_position(posicao).set_duration(video_clip.duration)
         logging.info(f"TextClip posicionado em {posicao} com duração {video_clip.duration} segundos.")
         
@@ -75,9 +59,6 @@ def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize:
         sys.exit(1)
 
 def gerar_audio(texto: str, caminho_audio: str):
-    """
-    Gera um arquivo de áudio a partir do texto usando gTTS.
-    """
     try:
         tts = gTTS(text=texto, lang='en')
         tts.save(caminho_audio)
@@ -87,9 +68,6 @@ def gerar_audio(texto: str, caminho_audio: str):
         sys.exit(1)
 
 def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> CompositeVideoClip:
-    """
-    Combina um arquivo de áudio com o vídeo, se o áudio existir.
-    """
     if os.path.exists(caminho_audio):
         try:
             audio_clip = AudioFileClip(caminho_audio)
@@ -105,13 +83,9 @@ def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> 
         return video_clip
 
 def gerar_temas_via_gemini() -> list:
-    """
-    Gera uma lista de temas utilizando a API do Gemini do Google.
-    Agora utilizando genai.generate_text de forma adequada.
-    """
     api_key = os.getenv('GEMINI_API_KEY')
     if not api_key:
-        logging.error("GEMINI_API_KEY não está definida no arquivo .env ou nos Secrets do GitHub.")
+        logging.error("GEMINI_API_KEY não está definida.")
         sys.exit(1)
     
     max_retries = 3
@@ -123,30 +97,30 @@ def gerar_temas_via_gemini() -> list:
         "Avoid any direct references or similarities to existing materials."
     )
 
+    palm.configure(api_key=api_key)
+
     for attempt in range(1, max_retries + 1):
         try:
-            genai.configure(api_key=api_key)
-            
             logging.info("Chamando a API Gemini para gerar novos temas...")
-            response = genai.generate_text(
+            response = palm.generate_text(
                 model="models/gemini-1.5-flash",
                 prompt=prompt,
                 temperature=0.7,
                 max_output_tokens=150
             )
 
-            if not response.candidates:
-                logging.error("A resposta da API não contém candidatos.")
+            if not response.result:
+                logging.error("A resposta da API não contém texto.")
                 raise ValueError("Resposta inválida da API Gemini.")
             
-            texto_gerado = response.candidates[0].output.strip()
+            texto_gerado = response.result.strip()
             temas = []
             if texto_gerado:
                 if '\n' in texto_gerado:
                     temas = [t.strip() for t in texto_gerado.split('\n') if t.strip()]
                 else:
                     temas = [t.strip() for t in texto_gerado.split(',') if t.strip()]
-            
+
             if not temas:
                 logging.warning("A API Gemini retornou uma lista vazia de temas.")
             else:
@@ -169,9 +143,6 @@ def gerar_temas_via_gemini() -> list:
             ]
 
 def carregar_temas(caminho_arquivo):
-    """
-    Carrega os temas do arquivo especificado. Se o arquivo estiver vazio, gera novos temas via Gemini.
-    """
     caminho_absoluto = os.path.abspath(caminho_arquivo)
     logging.info(f"Caminho absoluto do arquivo de temas: {caminho_absoluto}")
     
@@ -205,9 +176,6 @@ def carregar_temas(caminho_arquivo):
             sys.exit(1)
 
 def atualizar_temas(caminho_arquivo: str, novos_temas: list):
-    """
-    Atualiza o arquivo de temas com os novos temas gerados.
-    """
     try:
         with open(caminho_arquivo, 'w', encoding='utf-8') as f:
             json.dump({"temas": novos_temas}, f, indent=2, ensure_ascii=False)
@@ -217,9 +185,6 @@ def atualizar_temas(caminho_arquivo: str, novos_temas: list):
         sys.exit(1)
 
 def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
-    """
-    Seleciona o primeiro tema disponível no arquivo de novos temas e move para usados.
-    """
     try:
         with open(caminho_temas_novos, 'r', encoding='utf-8') as f_novos:
             data = json.load(f_novos)
@@ -250,9 +215,6 @@ def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
         sys.exit(1)
 
 def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
-    """
-    Salva o vídeo final no caminho especificado.
-    """
     try:
         os.makedirs(os.path.dirname(caminho_saida), exist_ok=True)
         video_com_audio.write_videofile(caminho_saida, codec='libx264', audio_codec='aac')
@@ -262,9 +224,6 @@ def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
         sys.exit(1)
 
 def main():
-    """
-    Função principal que coordena a criação do vídeo.
-    """
     logging.info("Iniciando o processo de criação de vídeo...")
     
     caminho_background = obter_caminho_absoluto('../assets/background.png')
