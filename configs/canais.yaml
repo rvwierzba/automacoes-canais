@@ -1,26 +1,17 @@
 canais:
-  - nome: FizzQuirk
-    plataforma: TikTok
-    gemini_api_key: AIzaSyD0E0A4dghtZGRIE368WES6tAVaXOVdNIw
-    tiktok_email: rafaelwierzba@gmail.com
-    tiktok_password: FIZZQUIRK_TIKTOK_PASSWORD
-    logo: background.png
-    hashtags: [c]
-
-  - nome: OutroCanal
+  - nome: FizzQuirkTikTok
     plataforma: TikTok
     gemini_api_key: AIzaSyD0E0A4dghtZGRIE368WES6tAVaXOVdNIw
     tiktok_email: rafaelwierzba@gmail.com
     tiktok_password: '@RvWierzba1995'
-    logo: OutroCanal_logo.png
-    hashtags: ["OutroCanal", "Educação", "Curiosidades"]
+    logo: background.png
+    hashtags: ["Educação", "Curiosidades"]
 
-  - nome: CanalYouTube1
+  
+  - nome: FizzQuirkYouTube
     plataforma: YouTube
     gemini_api_key: AIzaSyD0E0A4dghtZGRIE368WES6tAVaXOVdNIw
     youtube_api_key: CANALYOUTUBE1_YOUTUBE_API_KEY
     youtube_channel_id: UCWeFg_QABGRseHXFV7YdrVw
     logo: background.png
     hashtags: ["OutroCanal", "Educação", "Curiosidades"]
-
-  # Adicione mais canais conforme necessário
