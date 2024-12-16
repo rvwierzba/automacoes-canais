@@ -135,11 +135,6 @@ def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
 def main():
     try:
         caminho_imagem = obter_caminho_absoluto(os.path.join(IMAGES_DIR, DEFAULT_IMAGE))
-
-        if not os.path.exists(caminho_imagem):
-            logging.error(f"Imagem padrão não encontrada: {caminho_imagem}")
-            return
-
         caminho_audio = obter_caminho_absoluto(os.path.join(OUTPUT_AUDIO_DIR, "audio.mp3"))
         caminho_video_saida = obter_caminho_absoluto(os.path.join(OUTPUT_VIDEO_DIR, "video_final.mp4"))
         caminho_temas_novos = obter_caminho_absoluto(TEMAS_NOVOS_FILE)
@@ -155,4 +150,8 @@ def main():
             logging.error("Falha ao gerar áudio. Abortando")
             return
 
-        video_clip = Image
+        video_clip = ImageClip(caminho_imagem).set_duration(5) # Linha corrigida!
+
+        video_com_texto = adicionar_texto(video_clip, tema, ('center', 'center'))
+        video_com_audio = combinar_audio_video(video_com_texto, caminho_audio)
+        salvar
