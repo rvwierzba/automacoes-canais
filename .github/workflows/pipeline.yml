@@ -73,7 +73,12 @@ jobs:
           echo "${{ secrets.YOUTUBE_TOKEN_JSON }}" | base64 --decode > token.json
         shell: bash
 
-      # Passo 10: Listar Arquivos para Depuração
+      # Passo 10: Exportar GEMINI_API_KEY para o Ambiente
+      - name: Export GEMINI_API_KEY to Environment
+        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV
+        shell: bash
+
+      # Passo 11: Listar Arquivos para Depuração
       - name: List Files for Debugging
         run: |
           echo "Listando arquivos no diretório raiz:"
@@ -90,13 +95,13 @@ jobs:
           ls -la generated_videos/
         shell: bash
 
-      # Passo 11: Executar o Script Principal
+      # Passo 12: Executar o Script Principal
       - name: Run Main Pipeline Script
         run: |
           python main.py
         shell: bash
 
-      # Passo 12: Upload de Logs
+      # Passo 13: Upload de Logs
       - name: Upload Logs
         uses: actions/upload-artifact@v3
         with:
