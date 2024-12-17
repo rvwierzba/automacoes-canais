@@ -1,163 +1,113 @@
+# scripts/criar_video.py
 import os
-import sys
 import json
+import sys
 import logging
-import re
-from moviepy import ImageClip, AudioFileClip, CompositeVideoClip, TextClip
-import moviepy as mpe  # Mantido para evitar possíveis problemas futuros
-import google.generativeai as genai
-from dotenv import load_dotenv
+from moviepy import ImageClip, TextClip, CompositeVideoClip
 from gtts import gTTS
-from PIL import ImageFont
 
-# Configurações (adapte conforme necessário)
-load_dotenv()
-LOG_FILE = 'criar_video.log'
-OUTPUT_VIDEO_DIR = "videos"
-OUTPUT_AUDIO_DIR = "audio"
-IMAGES_DIR = "imagens"
-TEMAS_NOVOS_FILE = "temas_novos.json"
-TEMAS_USADOS_FILE = "temas_usados.json"
-DEFAULT_IMAGE = "background.jpg"
-
-# Configuração de logging
+# Configuração básica de logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(LOG_FILE, mode='a', encoding='utf-8')
+        logging.FileHandler('criar_video.log', mode='a', encoding='utf-8')
     ]
 )
 
-def obter_caminho_absoluto(relativo):
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    return os.path.normpath(os.path.join(script_dir, relativo))
-
-def limpar_texto(texto: str) -> str:
-    return re.sub(r'[\*_]', '', texto)
-
-def adicionar_texto(video_clip: ImageClip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white') -> CompositeVideoClip:
+def selecionar_tema(caminho_temas_novos: str):
     try:
-        texto_limpo = limpar_texto(texto)
-        try:
-            fonte = ImageFont.truetype("arial.ttf", fontsize)
-        except OSError:
-            try:
-                fonte = ImageFont.truetype("DejaVuSans.ttf", fontsize)
-            except OSError:
-                logging.warning("Fontes padrão não encontradas. Usando fonte padrão do MoviePy.")
-                fonte = None  # Define fonte como None explicitamente
-        txt_clip = TextClip(texto_limpo, fontsize=fontsize, color=color, font=fonte, method='caption').set_position(posicao).set_duration(video_clip.duration)
-        return CompositeVideoClip([video_clip, txt_clip])
+        with open(caminho_temas_novos, 'r', encoding='utf-8') as f:
+            temas = [json.loads(line) for line in f if line.strip()]
+        if not temas:
+            logging.error("Nenhum tema disponível para gerar vídeo.")
+            sys.exit(1)
+        tema = temas.pop(0)  # Seleciona o primeiro tema
+        return tema, temas
+    except FileNotFoundError:
+        logging.error(f"Arquivo de temas '{caminho_temas_novos}' não encontrado.")
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        logging.error(f"Erro ao decodificar JSON: {e}")
+        sys.exit(1)
+
+def atualizar_temas(caminho_temas_novos: str, novos_temas: list):
+    try:
+        with open(caminho_temas_novos, 'w', encoding='utf-8') as f:
+            for tema in novos_temas:
+                json.dump(tema, f)
+                f.write('\n')
     except Exception as e:
-        logging.exception(f"Erro ao adicionar texto: {e}")  # Use logging.exception aqui também
-        return video_clip
+        logging.error(f"Erro ao atualizar temas: {e}")
+        sys.exit(1)
 
 def gerar_audio(texto: str, caminho_audio: str):
     try:
         tts = gTTS(text=texto, lang='pt-br')
         tts.save(caminho_audio)
         logging.info(f"Áudio gerado em: {caminho_audio}")
-        return True
     except Exception as e:
-        logging.exception(f"Erro ao gerar áudio: {e}") # Use logging.exception
-        return False
+        logging.error(f"Erro ao gerar áudio: {e}")
+        sys.exit(1)
 
-def combinar_audio_video(video_clip: CompositeVideoClip, caminho_audio: str) -> CompositeVideoClip:
-    if not os.path.exists(caminho_audio):
-        logging.warning(f"Áudio não encontrado: {caminho_audio}")
-        return video_clip
+def adicionar_texto(video_clip, texto: str, posicao: tuple, fontsize: int = 70, color: str = 'white'):
     try:
-        audio_clip = AudioFileClip(caminho_audio).set_duration(video_clip.duration)
-        return video_clip.set_audio(audio_clip)
+        txt_clip = TextClip(texto, fontsize=fontsize, color=color).set_position(posicao).set_duration(video_clip.duration)
+        return CompositeVideoClip([video_clip, txt_clip])
     except Exception as e:
-        logging.exception(f"Erro ao combinar áudio/vídeo: {e}")  # Use logging.exception
+        logging.error(f"Erro ao adicionar texto: {e}")
         return video_clip
 
-def gerar_temas_via_gemini() -> list:
-    api_key = os.getenv('GEMINI_API_KEY')
-    if not api_key:
-        logging.error("GEMINI_API_KEY não definida.")
-        return None
-
-    prompt = ("Gere uma lista de 5 tópicos de vídeo do YouTube completamente únicos e originais relacionados à ciência. "
-              "Cada tópico deve ser inovador, não replicar nenhum conteúdo existente e estar em total conformidade com as leis de direitos autorais. "
-              "Evite quaisquer referências diretas ou semelhanças a materiais existentes.")
+def combinar_audio_video(video_com_texto, caminho_audio: str):
     try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-pro')
-        response = model.generate_content(prompt)
-        temas = [t.strip() for t in response.text.strip().split('\n') if t.strip()]
-        return temas
+        audio_clip = AudioFileClip(caminho_audio).set_duration(video_com_texto.duration)
+        return video_com_texto.set_audio(audio_clip)
     except Exception as e:
-        logging.exception(f"Erro na API Gemini: {e}")  # Use logging.exception
-        return None
+        logging.error(f"Erro ao combinar áudio/vídeo: {e}")
+        return video_com_texto
 
-def carregar_temas(caminho_arquivo):
-    try:
-        with open(caminho_arquivo, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        return data.get("temas", [])
-    except (FileNotFoundError, json.JSONDecodeError):
-        logging.warning(f"Arquivo {caminho_arquivo} não encontrado ou inválido. Gerando novos temas.")
-        return []
-
-def atualizar_temas(caminho_arquivo: str, novos_temas: list):
-    try:
-        with open(caminho_arquivo, 'w', encoding='utf-8') as f:
-            json.dump({"temas": novos_temas}, f, indent=2, ensure_ascii=False)
-    except Exception as e:
-        logging.exception(f"Erro ao atualizar arquivo: {e}") # Use logging.exception
-
-def selecionar_tema(caminho_temas_novos: str, caminho_temas_usados: str) -> str:
-    temas = carregar_temas(caminho_temas_novos)
-    if not temas:
-        return None
-
-    tema = temas.pop(0)
-    atualizar_temas(caminho_temas_novos, temas)
-    try:
-        with open(caminho_temas_usados, 'a', encoding='utf-8') as f_usados:
-            f_usados.write(json.dumps({"tema": tema}, ensure_ascii=False) + '\n')
-    except Exception as e:
-        logging.exception(f"Erro ao salvar temas usados {e}") # Use logging.exception
-    return tema
-
-def salvar_video(video_com_audio: CompositeVideoClip, caminho_saida: str):
+def salvar_video(video_com_audio, caminho_saida: str):
     try:
         os.makedirs(os.path.dirname(caminho_saida), exist_ok=True)
         video_com_audio.write_videofile(caminho_saida, codec='libx264', audio_codec='aac', fps=24)
         logging.info(f"Vídeo salvo em: {caminho_saida}")
     except Exception as e:
-        logging.exception(f"Erro ao salvar o vídeo: {e}") # Use logging.exception
+        logging.error(f"Erro ao salvar o vídeo: {e}")
+        sys.exit(1)
 
 def main():
+    logging.info("Iniciando a criação do vídeo...")
+
+    # Caminhos
+    caminho_temas_novos = os.path.join('data', 'temas_novos.json')
+    caminho_temas_usados = os.path.join('data', 'temas_usados.txt')
+    caminho_background = os.path.join('config', 'background.png')  # Ajuste conforme necessário
+    caminho_audio = os.path.join('audio', 'audio.mp3')
+    caminho_saida_video = os.path.join('generated_videos', 'video_final.mp4')
+
+    # Seleciona o tema
+    tema, novos_temas = selecionar_tema(caminho_temas_novos)
+    descricao_tema = tema.get("descricao", "")
+
+    # Atualiza os temas restantes
+    atualizar_temas(caminho_temas_novos, novos_temas)
+
+    # Gera áudio
+    gerar_audio(descricao_tema, caminho_audio)
+
+    # Cria o vídeo
     try:
-        caminho_imagem = obter_caminho_absoluto(os.path.join(IMAGES_DIR, DEFAULT_IMAGE))
-        caminho_audio = obter_caminho_absoluto(os.path.join(OUTPUT_AUDIO_DIR, "audio.mp3"))
-        caminho_video_saida = obter_caminho_absoluto(os.path.join(OUTPUT_VIDEO_DIR, "video_final.mp4"))
-        caminho_temas_novos = obter_caminho_absoluto(TEMAS_NOVOS_FILE)
-        caminho_temas_usados = obter_caminho_absoluto(TEMAS_USADOS_FILE)
+        background = ImageClip(caminho_background).set_duration(60)  # 60 segundos
+    except FileNotFoundError:
+        logging.error(f"Imagem de fundo '{caminho_background}' não encontrada.")
+        sys.exit(1)
 
-        tema = selecionar_tema(caminho_temas_novos, caminho_temas_usados)
+    video_com_texto = adicionar_texto(background, tema["tema"], ('center', 'bottom'))
+    video_com_audio = combinar_audio_video(video_com_texto, caminho_audio)
+    salvar_video(video_com_audio, caminho_saida_video)
 
-        if not tema:
-            logging.error("Nenhum tema disponível.")
-            return
+    logging.info("Vídeo criado com sucesso.")
 
-        if not gerar_audio(tema, caminho_audio):
-            logging.error("Falha ao gerar áudio. Abortando")
-            return
-
-        video_clip = ImageClip(caminho_imagem).set_duration(5)
-
-        video_com_texto = adicionar_texto(video_clip, tema, ('center', 'center'))
-
-        # Linha corrigida:
-        video_com_audio = combinar_audio_video(video_com_texto, caminho_audio)
-
-        salvar_video(video_com_audio, caminho_video_saida)
-
-    except Exception as e:
-        logging.exception(f"Erro na execução principal: {e}")  # Imprime
+if __name__ == "__main__":
+    main()
