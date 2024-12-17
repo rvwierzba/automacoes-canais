@@ -3,7 +3,7 @@ import os
 import json
 import sys
 import logging
-from moviepy.editor import ImageClip, TextClip, CompositeVideoClip
+from moviepy.editor import ImageClip, TextClip, CompositeVideoClip, AudioFileClip
 from gtts import gTTS
 
 # Configuração básica de logging
@@ -82,7 +82,7 @@ def main():
     # Caminhos
     caminho_temas_novos = os.path.join('data', 'temas_novos.json')
     caminho_temas_usados = os.path.join('data', 'temas_usados.txt')
-    caminho_background = os.path.join('config', 'background.png')  # Ajuste conforme necessário
+    caminho_background = os.path.join('background.png')  # Ajuste conforme necessário
     caminho_audio = os.path.join('audio', 'audio.mp3')
     caminho_saida_video = os.path.join('generated_videos', 'video_final.mp4')
 
