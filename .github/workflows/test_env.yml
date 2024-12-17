@@ -1,0 +1,53 @@
+name: Test Environment Variables
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test_env:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --no-cache-dir -r requirements.txt --index-url https://pypi.org/simple
+        shell: bash
+
+      - name: Decode and Create client_secret.json
+        run: |
+          echo "${{ secrets.CLIENT_SECRET_JSON }}" | base64 --decode > client_secret.json
+        shell: bash
+
+      - name: Decode and Create token.json
+        run: |
+          echo "${{ secrets.YOUTUBE_TOKEN_JSON }}" | base64 --decode > token.json
+        shell: bash
+
+      - name: Export API Keys to Environment
+        run: |
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV
+          echo "YOUTUBE_API_KEY=${{ secrets.YOUTUBE_API_KEY }}" >> $GITHUB_ENV
+          echo "YOUTUBE_CHANNEL_ID=${{ secrets.YOUTUBE_CHANNEL_ID }}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Run Main Pipeline Script
+        run: |
+          python main.py
+        shell: bash
+
+      - name: Upload Logs
+        uses: actions/upload-artifact@v3
+        with:
+          name: logs
+          path: |
+            main.log
