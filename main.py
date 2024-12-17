@@ -34,7 +34,7 @@ def obter_variaveis_ambiente():
     # Adicione outras variáveis de ambiente conforme necessário
     # Exemplo para TikTok:
     # tiktok_email = os.getenv('TIKTOK_EMAIL')
-    # tiktok_password = os.getenv('TIKTOK_PASSWORD')
+    # tiktok_password = os.getenv('TIKTOK_SENHA')
     
     variaveis = {
         'gemini_api_key': gemini_api_key,
