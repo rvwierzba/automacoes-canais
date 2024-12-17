@@ -1,17 +1,15 @@
+# config/canais.yaml
 canais:
   - nome: FizzQuirkTikTok
     plataforma: TikTok
-    gemini_api_key: AIzaSyD0E0A4dghtZGRIE368WES6tAVaXOVdNIw
-    tiktok_email: rafaelwierzba@gmail.com
-    tiktok_password: '@RvWierzba1995'
+    gemini_api_key: AIzaSyD0E0A4dghtZGRIE368WES6tAVaXOVdNIw  # Considerar mover para Secrets
     logo: background.png
     hashtags: ["Educação", "Curiosidades"]
 
-  
   - nome: FizzQuirkYouTube
     plataforma: YouTube
-    gemini_api_key: AIzaSyD0E0A4dghtZGRIE368WES6tAVaXOVdNIw
-    youtube_api_key: CANALYOUTUBE1_YOUTUBE_API_KEY
+    gemini_api_key: AIzaSyD0E0A4dghtZGRIE368WES6tAVaXOVdNIw  # Considerar mover para Secrets
+    youtube_api_key: CANALYOUTUBE1_YOUTUBE_API_KEY  # Considerar mover para Secrets
     youtube_channel_id: UCWeFg_QABGRseHXFV7YdrVw
     logo: background.png
     hashtags: ["OutroCanal", "Educação", "Curiosidades"]
