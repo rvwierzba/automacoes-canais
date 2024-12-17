@@ -88,4 +88,3 @@ jobs:
             criar_video.log
             upload_youtube.log
             upload_tiktok.log
-            run_pipeline.log
