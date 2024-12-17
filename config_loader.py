@@ -5,7 +5,8 @@ import logging
 import sys
 
 def carregar_config_canais():
-    caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config', 'canais.yaml')
+    # Caminho para canais.yaml na raiz
+    caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'canais.yaml')
     try:
         with open(caminho, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
