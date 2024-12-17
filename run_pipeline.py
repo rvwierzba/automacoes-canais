@@ -19,7 +19,7 @@ logging.basicConfig(
 def gerar_temas(caminho_saida_novos: str, caminho_saida_usados: str):
     """
     Gera um arquivo JSON com temas para a geração de áudio e move temas para usados.
-    
+
     :param caminho_saida_novos: Caminho para o arquivo de temas novos.
     :param caminho_saida_usados: Caminho para o arquivo de temas usados.
     """
