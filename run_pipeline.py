@@ -1,7 +1,9 @@
+# run_pipeline.py
 import os
 import json
 import sys
 import logging
+import yaml
 
 # Configuração básica de logging
 logging.basicConfig(
@@ -9,7 +11,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('run_pipeline.log', mode='a')
+        logging.FileHandler('run_pipeline.log', mode='a', encoding='utf-8')
     ]
 )
 
@@ -20,6 +22,30 @@ def gerar_temas(caminho_saida_novos: str, caminho_saida_usados: str):
     :param caminho_saida_novos: Caminho para o arquivo de temas novos.
     :param caminho_saida_usados: Caminho para o arquivo de temas usados.
     """
+    # Carrega canais para obter gemini_api_key
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        config_loader_path = os.path.join(os.path.dirname(script_dir), 'config_loader.py')
+        sys.path.append(os.path.dirname(script_dir))
+        from config_loader import carregar_config_canais, obter_canal_por_nome
+    except ImportError as e:
+        logging.error(f"Erro ao importar config_loader: {e}")
+        sys.exit(1)
+    
+    canais = carregar_config_canais()
+    canal = obter_canal_por_nome("FizzQuirkTikTok", canais)  # Usando gemini_api_key do TikTok
+    if not canal:
+        logging.error("Canal FizzQuirkTikTok não encontrado nas configurações.")
+        sys.exit(1)
+    
+    gemini_api_key = canal.get("gemini_api_key")
+    if not gemini_api_key:
+        logging.error("gemini_api_key não encontrada para o canal FizzQuirkTikTok.")
+        sys.exit(1)
+    
+    # Chamar a API Gemini para gerar temas
+    # Aqui você deve implementar a chamada à API Gemini para obter os temas.
+    # Por enquanto, vamos usar temas estáticos como exemplo.
     temas = [
         {"tema": "The Unexpected Physics Of Sneezing", "descricao": "Why Are Sneezes So Loud"},
         {"tema": "The Art of Minimalism"},
