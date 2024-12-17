@@ -14,7 +14,7 @@ logging.basicConfig(
     ]
 )
 
-def gerar_temas(caminho_saida_novos: str, caminho_saida_usados: str):
+def gerar_temas():
     """
     Chama o script run_pipeline.py para gerar temas.
     """
@@ -66,9 +66,7 @@ def main():
     logging.info("Iniciando pipeline completo...")
 
     # 1. Gera temas novos
-    caminho_saida_novos = os.path.join('data', 'temas_novos.json')
-    caminho_saida_usados = os.path.join('data', 'temas_usados.txt')
-    gerar_temas(caminho_saida_novos, caminho_saida_usados)
+    gerar_temas()
 
     # 2. Gera vídeo a partir dos temas
     gerar_video()
