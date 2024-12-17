@@ -3,7 +3,7 @@ import os
 import json
 import sys
 import logging
-from moviepy import ImageClip, TextClip, CompositeVideoClip
+from moviepy.editor import ImageClip, TextClip, CompositeVideoClip
 from gtts import gTTS
 
 # Configuração básica de logging
