@@ -7,8 +7,8 @@ on:
       - main
   workflow_dispatch:
   schedule:
-    - cron: '0 5 * * *'  # Executa todos os dias às 05:00 UTC
-    - cron: '0 19 * * *' # Executa todos os dias às 19:00 UTC
+    - cron: '0 5 * * *'  # Executa todos os dias às 05:00 UTC (~2h da manhã no Brasil)
+    - cron: '0 19 * * *' # Executa todos os dias às 19:00 UTC (~16h da tarde no Brasil)
 
 jobs:
   build:
@@ -60,8 +60,16 @@ jobs:
       - name: Export Environment Variables
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TIKTOK_EMAIL: ${{ secrets.TIKTOK_EMAIL }}
+          TIKTOK_PASSWORD: ${{ secrets.TIKTOK_PASSWORD }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
         run: |
           echo "GEMINI_API_KEY=${GEMINI_API_KEY}" >> $GITHUB_ENV
+          echo "TIKTOK_EMAIL=${TIKTOK_EMAIL}" >> $GITHUB_ENV
+          echo "TIKTOK_PASSWORD=${TIKTOK_PASSWORD}" >> $GITHUB_ENV
+          echo "YOUTUBE_API_KEY=${YOUTUBE_API_KEY}" >> $GITHUB_ENV
+          echo "YOUTUBE_CHANNEL_ID=${YOUTUBE_CHANNEL_ID}" >> $GITHUB_ENV
 
       # Passo 8: Executar o Script Principal
       - name: Run Main Pipeline Script
@@ -74,4 +82,10 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: logs
-          path: main.log
+          path: |
+            main.log
+            run_pipeline.log
+            criar_video.log
+            upload_youtube.log
+            upload_tiktok.log
+            run_pipeline.log
