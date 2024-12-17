@@ -33,21 +33,27 @@ jobs:
           convert -version
         shell: bash
 
-      # Passo 4: Listar Versões do MoviePy (usando pip index versions)
+      # Passo 4: Ajustar as Políticas de Segurança do ImageMagick para PNG
+      - name: Adjust ImageMagick Policy to Allow PNG
+        run: |
+          sudo bash -c 'echo "<policy domain=\"coder\" rights=\"read|write\" pattern=\"PNG\" />" >> /etc/ImageMagick-6/policy.xml'
+        shell: bash
+
+      # Passo 5: Listar Versões do MoviePy (usando pip index versions)
       - name: List Available MoviePy Versions
         run: |
           pip install --upgrade pip
           pip index versions moviepy
         shell: bash
 
-      # Passo 5: Instalar Dependências
+      # Passo 6: Instalar Dependências
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt --index-url https://pypi.org/simple
         shell: bash
 
-      # Passo 6: Verificar Instalação das Bibliotecas
+      # Passo 7: Verificar Instalação das Bibliotecas
       - name: Verify Installations
         run: |
           python -c "import moviepy; print('MoviePy version:', moviepy.__version__)"
@@ -56,7 +62,7 @@ jobs:
           convert -version
         shell: bash
 
-      # Passo 7: Exportar Variáveis de Ambiente (Secrets) e Criar client_secret.json
+      # Passo 8: Exportar Variáveis de Ambiente (Secrets) e Criar client_secret.json
       - name: Export Environment Variables and Create client_secret.json
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -91,13 +97,13 @@ jobs:
           ls -la generated_videos/
         shell: bash
 
-      # Passo 8: Executar o Script Principal
+      # Passo 9: Executar o Script Principal
       - name: Run Main Pipeline Script
         run: |
           python main.py
         shell: bash
 
-      # Passo 9: Upload de Logs
+      # Passo 10: Upload de Logs
       - name: Upload Logs
         uses: actions/upload-artifact@v3
         with:
