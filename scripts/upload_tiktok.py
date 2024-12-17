@@ -19,14 +19,16 @@ logging.basicConfig(
 )
 
 def upload_to_tiktok(video_path, caption, email, senha):
-    driver = webdriver.Chrome()
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')  # Executa o navegador em modo headless
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    driver = webdriver.Chrome(options=options)
     driver.get("https://www.tiktok.com/upload?lang=en")
 
-    # Aqui você deveria implementar o login automático usando Selenium, se possível.
-    # Isso pode ser complicado devido a possíveis captchas e medidas de segurança.
-    # Atualmente, o script espera que você faça login manualmente.
-    logging.info("Por favor, faça login no TikTok manualmente e aguarde...")
-    time.sleep(60)  # Tempo para login manual, ajuste conforme necessário
+    # Tempo para realizar o login manualmente, se necessário
+    logging.info("Por favor, faça login no TikTok manualmente na interface do navegador e aguarde...")
+    time.sleep(300)  # Tempo aumentado para login manual (5 minutos)
 
     try:
         upload_button = driver.find_element(By.XPATH, "//input[@type='file']")
