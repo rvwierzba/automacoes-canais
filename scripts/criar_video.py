@@ -59,6 +59,13 @@ def gerar_audio(texto: str, caminho_audio: str):
         tts = gTTS(text=texto, lang='pt')
         tts.save(caminho_audio)
         logging.info(f"Áudio gerado em: {caminho_audio}")
+        
+        # Verificar se o arquivo de áudio foi criado e não está vazio
+        if os.path.exists(caminho_audio) and os.path.getsize(caminho_audio) > 0:
+            logging.info(f"Arquivo de áudio '{caminho_audio}' criado com sucesso.")
+        else:
+            logging.error(f"Arquivo de áudio '{caminho_audio}' não foi criado corretamente.")
+            sys.exit(1)
     except Exception as e:
         logging.error(f"Erro ao gerar áudio: {e}")
         sys.exit(1)
@@ -73,7 +80,18 @@ def adicionar_texto(video_clip, texto: str, posicao: tuple, fontsize: int = 70, 
 
 def combinar_audio_video(video_com_texto, caminho_audio: str):
     try:
-        audio_clip = AudioFileClip(caminho_audio).set_duration(video_com_texto.duration)
+        audio_clip = AudioFileClip(caminho_audio)
+        
+        video_duration = video_com_texto.duration
+        audio_duration = audio_clip.duration
+        
+        logging.info(f"Duração do vídeo: {video_duration} segundos")
+        logging.info(f"Duração do áudio: {audio_duration} segundos")
+        
+        if audio_duration > video_duration:
+            logging.warning("Duração do áudio excede a duração do vídeo. Ajustando a duração do áudio.")
+            audio_clip = audio_clip.set_duration(video_duration)
+        
         return video_com_texto.set_audio(audio_clip)
     except Exception as e:
         logging.error(f"Erro ao combinar áudio/vídeo: {e}")
@@ -92,7 +110,7 @@ def main():
     logging.info("Iniciando a criação do vídeo...")
     
     # Determina o diretório base do projeto (root)
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # assuming script is in 'scripts/'
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # assumindo que o script está em 'scripts/'
 
     # Caminhos absolutos
     caminho_temas_novos = os.path.join(base_dir, 'data', 'temas_novos.json')
