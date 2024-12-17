@@ -1,4 +1,3 @@
-# .github/workflows/pipeline.yml
 name: Pipeline de Automação de Vídeos
 
 on:
@@ -80,15 +79,14 @@ jobs:
           echo "${CLIENT_SECRET_JSON}" > client_secret.json
         shell: bash
 
-        # Adicione este passo antes de "List Files for Debugging"
+      # Passo 9: Criar token.json (Se Necessário)
       - name: Create token.json
         if: ${{ secrets.YOUTUBE_TOKEN_JSON }}
         run: |
           echo "${{ secrets.YOUTUBE_TOKEN_JSON }}" > token.json
         shell: bash
 
-
-      # Passo Adicional: Listar Arquivos para Depuração
+      # Passo 10: Listar Arquivos para Depuração
       - name: List Files for Debugging
         run: |
           echo "Listando arquivos no diretório raiz:"
@@ -105,13 +103,13 @@ jobs:
           ls -la generated_videos/
         shell: bash
 
-      # Passo 9: Executar o Script Principal
+      # Passo 11: Executar o Script Principal
       - name: Run Main Pipeline Script
         run: |
           python main.py
         shell: bash
 
-      # Passo 10: Upload de Logs
+      # Passo 12: Upload de Logs
       - name: Upload Logs
         uses: actions/upload-artifact@v3
         with:
