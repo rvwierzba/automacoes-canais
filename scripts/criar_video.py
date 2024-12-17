@@ -53,6 +53,8 @@ def gerar_audio(texto: str, caminho_audio: str):
     try:
         # Garante que o diretório 'audio/' exista
         os.makedirs(os.path.dirname(caminho_audio), exist_ok=True)
+        logging.info(f"Diretório '{os.path.dirname(caminho_audio)}' criado ou já existe.")
+        
         # Atualiza o código do idioma para 'pt' para evitar depreciação
         tts = gTTS(text=texto, lang='pt')
         tts.save(caminho_audio)
@@ -91,7 +93,7 @@ def main():
     
     # Determina o diretório base do projeto (root)
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # assuming script is in 'scripts/'
-    
+
     # Caminhos absolutos
     caminho_temas_novos = os.path.join(base_dir, 'data', 'temas_novos.json')
     caminho_temas_usados = os.path.join(base_dir, 'data', 'temas_usados.txt')
@@ -101,17 +103,17 @@ def main():
 
     # Listar arquivos na raiz para depuração
     listar_arquivos_diretorio(base_dir)
-    
+
     # Seleciona o tema
     tema, novos_temas = selecionar_tema(caminho_temas_novos)
     descricao_tema = tema.get("descricao", "")
-    
+
     # Atualiza os temas restantes
     atualizar_temas(caminho_temas_novos, novos_temas)
-    
+
     # Gera áudio
     gerar_audio(descricao_tema, caminho_audio)
-    
+
     # Cria o vídeo
     try:
         # Listar arquivos no diretório 'assets' antes de tentar abrir a imagem
