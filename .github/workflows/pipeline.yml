@@ -61,29 +61,16 @@ jobs:
           convert -version
         shell: bash
 
-      # Passo 8: Exportar Variáveis de Ambiente (Secrets) e Criar client_secret.json
-      - name: Export Environment Variables and Create client_secret.json
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          TIKTOK_EMAIL: ${{ secrets.TIKTOK_EMAIL }}
-          TIKTOK_PASSWORD: ${{ secrets.TIKTOK_PASSWORD }}
-          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
-          CLIENT_SECRET_JSON: ${{ secrets.CLIENT_SECRET_JSON }}
+     # Passo 8: Exportar Variáveis de Ambiente (Secrets) e Criar client_secret.json
+      - name: Decode and Create client_secret.json
         run: |
-          echo "GEMINI_API_KEY=${GEMINI_API_KEY}" >> $GITHUB_ENV
-          echo "TIKTOK_EMAIL=${TIKTOK_EMAIL}" >> $GITHUB_ENV
-          echo "TIKTOK_PASSWORD=${TIKTOK_PASSWORD}" >> $GITHUB_ENV
-          echo "YOUTUBE_API_KEY=${YOUTUBE_API_KEY}" >> $GITHUB_ENV
-          echo "YOUTUBE_CHANNEL_ID=${YOUTUBE_CHANNEL_ID}" >> $GITHUB_ENV
-          echo "${CLIENT_SECRET_JSON}" > client_secret.json
+          echo "${{ secrets.CLIENT_SECRET_JSON }}" | base64 --decode > client_secret.json
         shell: bash
 
-      # Passo 9: Criar token.json (Se Necessário)
-      - name: Create token.json
-        if: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+    # Passo 9: Criar token.json
+      - name: Decode and Create token.json
         run: |
-          echo "${{ secrets.YOUTUBE_TOKEN_JSON }}" > token.json
+          echo "${{ secrets.YOUTUBE_TOKEN_JSON }}" | base64 --decode > token.json
         shell: bash
 
       # Passo 10: Listar Arquivos para Depuração
