@@ -88,31 +88,34 @@ def salvar_video(video_com_audio, caminho_saida: str):
 
 def main():
     logging.info("Iniciando a criação do vídeo...")
-
-    # Caminhos
-    caminho_temas_novos = os.path.join('data', 'temas_novos.json')
-    caminho_temas_usados = os.path.join('data', 'temas_usados.txt')
-    caminho_background = os.path.join('assets', 'background.png')  # Atualizado para assets/background.png
-    caminho_audio = os.path.join('audio', 'audio.mp3')
-    caminho_saida_video = os.path.join('generated_videos', 'video_final.mp4')
+    
+    # Determina o diretório base do projeto (root)
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # assuming script is in 'scripts/'
+    
+    # Caminhos absolutos
+    caminho_temas_novos = os.path.join(base_dir, 'data', 'temas_novos.json')
+    caminho_temas_usados = os.path.join(base_dir, 'data', 'temas_usados.txt')
+    caminho_background = os.path.join(base_dir, 'assets', 'background.png')
+    caminho_audio = os.path.join(base_dir, 'audio', 'audio.mp3')
+    caminho_saida_video = os.path.join(base_dir, 'generated_videos', 'video_final.mp4')
 
     # Listar arquivos na raiz para depuração
-    listar_arquivos_diretorio('.')
-
+    listar_arquivos_diretorio(base_dir)
+    
     # Seleciona o tema
     tema, novos_temas = selecionar_tema(caminho_temas_novos)
     descricao_tema = tema.get("descricao", "")
-
+    
     # Atualiza os temas restantes
     atualizar_temas(caminho_temas_novos, novos_temas)
-
+    
     # Gera áudio
     gerar_audio(descricao_tema, caminho_audio)
-
+    
     # Cria o vídeo
     try:
         # Listar arquivos no diretório 'assets' antes de tentar abrir a imagem
-        listar_arquivos_diretorio('assets')
+        listar_arquivos_diretorio(os.path.join(base_dir, 'assets'))
         
         background = ImageClip(caminho_background).set_duration(60)  # 60 segundos
     except FileNotFoundError:
