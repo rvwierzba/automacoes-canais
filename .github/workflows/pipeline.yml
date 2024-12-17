@@ -1,3 +1,4 @@
+# .github/workflows/pipeline.yml
 name: Pipeline de Automação de Vídeos
 
 on:
@@ -14,42 +15,61 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Passo 1: Checkout do Código
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      # Passo 2: Configurar Python
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
+      # Passo 3: Instalar ImageMagick e Fonts DejaVu
       - name: Install ImageMagick and Fonts
         run: |
           sudo apt-get update
           sudo apt-get install -y imagemagick fonts-dejavu
           convert -version
+        shell: bash
 
+      # Passo 4: Listar Versões do MoviePy (usando pip index versions)
+      - name: List Available MoviePy Versions
+        run: |
+          pip install --upgrade pip
+          pip index versions moviepy
+        shell: bash
+
+      # Passo 5: Instalar Dependências
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir -r requirements.txt --index-url https://pypi.org/simple
         shell: bash
 
+      # Passo 6: Verificar Instalação das Bibliotecas
       - name: Verify Installations
         run: |
           python -c "import moviepy; print('MoviePy version:', moviepy.__version__)"
           python -c "import google.generativeai as genai; print('Google Gemini Library Imported Successfully')"
+          python -c "import yaml; print('PyYAML Imported Successfully')"
           convert -version
+        shell: bash
 
+      # Passo 7: Exportar Variáveis de Ambiente (Secrets)
       - name: Export Environment Variables
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           echo "GEMINI_API_KEY=${GEMINI_API_KEY}" >> $GITHUB_ENV
 
+      # Passo 8: Executar o Script Principal
       - name: Run Main Pipeline Script
         run: |
           python main.py
+        shell: bash
 
+      # Passo 9: Upload de Logs
       - name: Upload Logs
         uses: actions/upload-artifact@v3
         with:
