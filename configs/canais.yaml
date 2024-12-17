@@ -1,4 +1,4 @@
-# canais.yaml
+# configs/canais.yaml
 canais:
   - nome: FizzQuirkTikTok
     plataforma: TikTok
