@@ -61,13 +61,13 @@ jobs:
           convert -version
         shell: bash
 
-     # Passo 8: Exportar Variáveis de Ambiente (Secrets) e Criar client_secret.json
+      # Passo 8: Decodificar e Criar client_secret.json
       - name: Decode and Create client_secret.json
         run: |
           echo "${{ secrets.CLIENT_SECRET_JSON }}" | base64 --decode > client_secret.json
         shell: bash
 
-    # Passo 9: Criar token.json
+      # Passo 9: Decodificar e Criar token.json
       - name: Decode and Create token.json
         run: |
           echo "${{ secrets.YOUTUBE_TOKEN_JSON }}" | base64 --decode > token.json
