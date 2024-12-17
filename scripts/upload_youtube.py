@@ -1,3 +1,4 @@
+# scripts/upload_youtube.py
 import os
 import json
 import google_auth_oauthlib.flow
@@ -5,15 +6,21 @@ import googleapiclient.discovery
 import googleapiclient.errors
 import google.auth.transport.requests
 import sys
-
-# Ajusta o path para importar config_loader do nível acima
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import logging
 
 from config_loader import carregar_config_canais, obter_canal_por_nome
 
+# Configuração básica de logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('upload_youtube.log', mode='a', encoding='utf-8')
+    ]
+)
+
 def carregar_credenciais(client_secrets_file, scopes):
-    # Aqui o token.json será criado no mesmo diretório de execução.
-    # Você pode preferir guardá-lo no mesmo nível do client_secret.json
     token_path = os.path.join(os.path.dirname(client_secrets_file), 'token.json')
     if os.path.exists(token_path):
         with open(token_path, 'r') as token_file:
@@ -59,16 +66,17 @@ def upload_to_youtube(file_path, title, description, tags, category_id='22', pri
             media_body=googleapiclient.http.MediaFileUpload(file_path)
         )
         response = request.execute()
-        print(f"Vídeo enviado com sucesso: https://www.youtube.com/watch?v={response['id']}")
+        logging.info(f"Vídeo enviado com sucesso: https://www.youtube.com/watch?v={response['id']}")
     except googleapiclient.errors.HttpError as e:
-        print(f"Erro ao enviar o vídeo: {e}")
+        logging.error(f"Erro ao enviar o vídeo: {e}")
+        sys.exit(1)
 
 def main():
     canais = carregar_config_canais()
     canal_youtube = obter_canal_por_nome("FizzQuirkYouTube", canais)
     if not canal_youtube:
-        print("Canal FizzQuirkYouTube não encontrado.")
-        return
+        logging.error("Canal FizzQuirkYouTube não encontrado.")
+        sys.exit(1)
 
     generated_videos_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'generated_videos')
     
