@@ -43,8 +43,8 @@ def carregar_credenciais(client_secrets_file, scopes):
 def upload_to_youtube(file_path, title, description, tags, category_id='22', privacy_status='public'):
     scopes = ["https://www.googleapis.com/auth/youtube.upload"]
 
-    # O client_secret.json está em ../config/client_secret.json
-    client_secrets_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config', 'client_secret.json')
+    # O client_secret.json está na raiz
+    client_secrets_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'client_secret.json')
 
     credentials = carregar_credenciais(client_secrets_file, scopes)
     youtube = googleapiclient.discovery.build("youtube", "v3", credentials=credentials)
