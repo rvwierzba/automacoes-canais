@@ -80,6 +80,14 @@ jobs:
           echo "${CLIENT_SECRET_JSON}" > client_secret.json
         shell: bash
 
+        # Adicione este passo antes de "List Files for Debugging"
+      - name: Create token.json
+        if: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+        run: |
+          echo "${{ secrets.YOUTUBE_TOKEN_JSON }}" > token.json
+        shell: bash
+
+
       # Passo Adicional: Listar Arquivos para Depuração
       - name: List Files for Debugging
         run: |
