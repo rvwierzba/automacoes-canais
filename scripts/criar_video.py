@@ -16,6 +16,13 @@ logging.basicConfig(
     ]
 )
 
+def listar_arquivos_diretorio(diretorio):
+    try:
+        arquivos = os.listdir(diretorio)
+        logging.info(f"Arquivos no diretório '{diretorio}': {arquivos}")
+    except Exception as e:
+        logging.error(f"Erro ao listar arquivos no diretório '{diretorio}': {e}")
+
 def selecionar_tema(caminho_temas_novos: str):
     try:
         with open(caminho_temas_novos, 'r', encoding='utf-8') as f:
@@ -85,9 +92,12 @@ def main():
     # Caminhos
     caminho_temas_novos = os.path.join('data', 'temas_novos.json')
     caminho_temas_usados = os.path.join('data', 'temas_usados.txt')
-    caminho_background = os.path.join('background.png')  # Ajuste conforme necessário
+    caminho_background = os.path.join('assets', 'background.png')  # Atualizado para assets/background.png
     caminho_audio = os.path.join('audio', 'audio.mp3')
     caminho_saida_video = os.path.join('generated_videos', 'video_final.mp4')
+
+    # Listar arquivos na raiz para depuração
+    listar_arquivos_diretorio('.')
 
     # Seleciona o tema
     tema, novos_temas = selecionar_tema(caminho_temas_novos)
@@ -101,6 +111,9 @@ def main():
 
     # Cria o vídeo
     try:
+        # Listar arquivos no diretório 'assets' antes de tentar abrir a imagem
+        listar_arquivos_diretorio('assets')
+        
         background = ImageClip(caminho_background).set_duration(60)  # 60 segundos
     except FileNotFoundError:
         logging.error(f"Imagem de fundo '{caminho_background}' não encontrada.")
