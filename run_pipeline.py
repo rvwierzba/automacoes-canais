@@ -3,7 +3,8 @@ import os
 import json
 import sys
 import logging
-import yaml
+
+from config_loader import carregar_config_canais, obter_canal_por_nome
 
 # Configuração básica de logging
 logging.basicConfig(
@@ -22,16 +23,6 @@ def gerar_temas(caminho_saida_novos: str, caminho_saida_usados: str):
     :param caminho_saida_novos: Caminho para o arquivo de temas novos.
     :param caminho_saida_usados: Caminho para o arquivo de temas usados.
     """
-    # Carrega canais para obter gemini_api_key
-    try:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        config_loader_path = os.path.join(os.path.dirname(script_dir), 'config_loader.py')
-        sys.path.append(os.path.dirname(script_dir))
-        from config_loader import carregar_config_canais, obter_canal_por_nome
-    except ImportError as e:
-        logging.error(f"Erro ao importar config_loader: {e}")
-        sys.exit(1)
-    
     canais = carregar_config_canais()
     canal = obter_canal_por_nome("FizzQuirkTikTok", canais)  # Usando gemini_api_key do TikTok
     if not canal:
@@ -44,7 +35,7 @@ def gerar_temas(caminho_saida_novos: str, caminho_saida_usados: str):
         sys.exit(1)
     
     # Chamar a API Gemini para gerar temas
-    # Aqui você deve implementar a chamada à API Gemini para obter os temas.
+    # Aqui você deve implementar a chamada à API Gemini para obter os temas dinamicamente.
     # Por enquanto, vamos usar temas estáticos como exemplo.
     temas = [
         {"tema": "The Unexpected Physics Of Sneezing", "descricao": "Why Are Sneezes So Loud"},
