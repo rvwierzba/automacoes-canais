@@ -64,12 +64,14 @@ jobs:
           TIKTOK_PASSWORD: ${{ secrets.TIKTOK_PASSWORD }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
+          CLIENT_SECRET_JSON: ${{ secrets.CLIENT_SECRET_JSON }}
         run: |
           echo "GEMINI_API_KEY=${GEMINI_API_KEY}" >> $GITHUB_ENV
           echo "TIKTOK_EMAIL=${TIKTOK_EMAIL}" >> $GITHUB_ENV
           echo "TIKTOK_PASSWORD=${TIKTOK_PASSWORD}" >> $GITHUB_ENV
           echo "YOUTUBE_API_KEY=${YOUTUBE_API_KEY}" >> $GITHUB_ENV
           echo "YOUTUBE_CHANNEL_ID=${YOUTUBE_CHANNEL_ID}" >> $GITHUB_ENV
+          echo "${CLIENT_SECRET_JSON}" > client_secret.json
 
       # Passo 8: Executar o Script Principal
       - name: Run Main Pipeline Script
