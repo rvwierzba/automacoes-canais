@@ -44,7 +44,10 @@ def atualizar_temas(caminho_temas_novos: str, novos_temas: list):
 
 def gerar_audio(texto: str, caminho_audio: str):
     try:
-        tts = gTTS(text=texto, lang='pt-br')
+        # Garante que o diretório 'audio/' exista
+        os.makedirs(os.path.dirname(caminho_audio), exist_ok=True)
+        # Atualiza o código do idioma para 'pt' para evitar depreciação
+        tts = gTTS(text=texto, lang='pt')
         tts.save(caminho_audio)
         logging.info(f"Áudio gerado em: {caminho_audio}")
     except Exception as e:
