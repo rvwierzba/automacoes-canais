@@ -128,4 +128,24 @@ jobs:
             run_pipeline.log
             criar_video.log
             upload_youtube.log
-            upload_tiktok.log
+            upload_tiktok.log 
+            ```
+
+### **Passo 1.2: Validar a Sintaxe do YAML**
+
+Antes de confirmar as alterações, é altamente recomendável validar a sintaxe do YAML para evitar futuros erros. Você pode usar ferramentas online como [YAML Lint](https://www.yamllint.com/) para verificar se o seu arquivo está correto.
+
+1. **Copie o conteúdo acima do `pipeline.yml`.**
+2. **Cole no [YAML Lint](https://www.yamllint.com/).**
+3. **Verifique se há erros de sintaxe e corrija conforme necessário.**
+
+---
+
+## **2. Corrigindo o Erro de Política de Segurança do ImageMagick**
+
+Após resolver o erro de sintaxe no YAML, vamos garantir que as políticas do ImageMagick estão configuradas corretamente para permitir operações com `PNG` e `PNG32`.
+
+### **Passo 2.1: Confirmar a Aplicação das Políticas**
+
+No **Passo 5: Verify ImageMagick Policies**, o workflow verifica se as políticas para `PNG*` foram adicionadas aos arquivos `policy.xml`. Certifique-se de que nas saídas dos logs você veja linhas indicando que as políticas foram ajustadas, por exemplo:
+
