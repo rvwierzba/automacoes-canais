@@ -32,11 +32,12 @@ jobs:
           convert -version
         shell: bash
 
-      # Passo 4: Encontrar e Ajustar as Políticas de Segurança do ImageMagick para PNG e PNG32
+      # Passo 4: Ajustar as Políticas de Segurança do ImageMagick para PNG e PNG32
       - name: Adjust ImageMagick Policies for PNG and PNG32
         run: |
+          # Encontrar todos os arquivos policy.xml
           POLICY_FILES=$(sudo find / -type f -name "policy.xml" 2>/dev/null)
-
+          
           if [ -z "$POLICY_FILES" ]; then
             echo "Nenhum arquivo policy.xml encontrado."
             exit 1
