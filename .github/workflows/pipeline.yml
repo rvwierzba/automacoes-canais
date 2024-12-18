@@ -32,11 +32,18 @@ jobs:
           convert -version
         shell: bash
 
-      # Passo 4: Ajustar as Políticas de Segurança do ImageMagick para PNG
-      - name: Adjust ImageMagick Policy to Allow PNG
+      # Passo 4: Ajustar as Políticas de Segurança do ImageMagick para PNG e PNG32
+      - name: Adjust ImageMagick Policy to Allow PNG and PNG32
         run: |
           sudo bash -c 'echo "<policy domain=\"coder\" rights=\"read|write\" pattern=\"PNG\" />" >> /etc/ImageMagick-6/policy.xml'
+          sudo bash -c 'echo "<policy domain=\"coder\" rights=\"read|write\" pattern=\"PNG32\" />" >> /etc/ImageMagick-6/policy.xml'
         shell: bash
+
+      # Passo 4.1: Verificar as Políticas do ImageMagick (Somente para Depuração)
+      - name: Verify ImageMagick Policies
+        run: |
+          sudo grep -E 'PNG|PNG32' /etc/ImageMagick-6/policy.xml
+          shell: bash
 
       # Passo 5: Listar Versões do MoviePy (usando pip index versions)
       - name: List Available MoviePy Versions
