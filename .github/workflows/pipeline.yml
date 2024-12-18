@@ -35,28 +35,32 @@ jobs:
       # Passo 4: Ajustar as Políticas de Segurança do ImageMagick para PNG e PNG32
       - name: Adjust ImageMagick Policies for PNG and PNG32
         run: |
-          POLICY_FILE="/etc/ImageMagick-6/policy.xml"
-          
-          # Fazer backup do arquivo policy.xml
-          sudo cp "$POLICY_FILE" "$POLICY_FILE.bak"
-          
-          # Remover políticas restritivas existentes para PNG e PNG32
-          sudo sed -i '/<policy domain="coder" rights="none" pattern="PNG" \/>/d' "$POLICY_FILE"
-          sudo sed -i '/<policy domain="coder" rights="none" pattern="PNG32" \/>/d' "$POLICY_FILE"
-          
-          # Adicionar políticas que permitem leitura e escrita para PNG e PNG32
-          echo '<policy domain="coder" rights="read|write" pattern="PNG" />' | sudo tee -a "$POLICY_FILE"
-          echo '<policy domain="coder" rights="read|write" pattern="PNG32" />' | sudo tee -a "$POLICY_FILE"
+          POLICY_FILES=$(sudo find / -type f -name "policy.xml" 2>/dev/null)
+          for POLICY_FILE in $POLICY_FILES; do
+            echo "Adjusting $POLICY_FILE"
+
+            # Fazer backup do arquivo policy.xml
+            sudo cp "$POLICY_FILE" "${POLICY_FILE}.bak"
+
+            # Remover políticas restritivas existentes para PNG e PNG32
+            sudo sed -i '/<policy domain="coder" rights="none" pattern="PNG" \/>/d' "$POLICY_FILE"
+            sudo sed -i '/<policy domain="coder" rights="none" pattern="PNG32" \/>/d' "$POLICY_FILE"
+
+            # Adicionar políticas que permitem leitura e escrita para PNG e PNG32
+            echo '<policy domain="coder" rights="read|write" pattern="PNG" />' | sudo tee -a "$POLICY_FILE"
+            echo '<policy domain="coder" rights="read|write" pattern="PNG32" />' | sudo tee -a "$POLICY_FILE"
+          done
         shell: bash
 
       # Passo 5: Verificar as Políticas Ajustadas
       - name: Verify ImageMagick Policies
         run: |
-          POLICY_FILE="/etc/ImageMagick-6/policy.xml"
-          
-          echo "Verificando políticas no arquivo $POLICY_FILE:"
-          grep -E 'pattern="PNG"' "$POLICY_FILE" || echo "Nenhuma política encontrada para PNG em $POLICY_FILE"
-          grep -E 'pattern="PNG32"' "$POLICY_FILE" || echo "Nenhuma política encontrada para PNG32 em $POLICY_FILE"
+          POLICY_FILES=$(sudo find / -type f -name "policy.xml" 2>/dev/null)
+          for POLICY_FILE in $POLICY_FILES; do
+            echo "Verifying $POLICY_FILE"
+            grep -E 'pattern="PNG"' "$POLICY_FILE" || echo "No policy found for PNG in $POLICY_FILE"
+            grep -E 'pattern="PNG32"' "$POLICY_FILE" || echo "No policy found for PNG32 in $POLICY_FILE"
+          done
         shell: bash
 
       # Passo 6: Instalar Dependências Python
@@ -81,13 +85,27 @@ jobs:
           echo "YOUTUBE_CHANNEL_ID=${{ secrets.YOUTUBE_CHANNEL_ID }}" >> $GITHUB_ENV
         shell: bash
 
-      # Passo 9: Executar o Script Principal
+      # Passo 9: Testar ImageMagick com PNG32
+      - name: Test ImageMagick with PNG32
+        run: |
+          # Criar uma imagem PNG32 de teste
+          convert -size 100x100 xc:transparent PNG32:test_png32.png
+          # Verificar se a imagem foi criada com sucesso
+          if [[ -f "test_png32.png" ]]; then
+            echo "PNG32 image created successfully."
+          else
+            echo "Failed to create PNG32 image."
+            exit 1
+          fi
+        shell: bash
+
+      # Passo 10: Executar o Script Principal
       - name: Run Main Script
         run: |
           python main.py
         shell: bash
 
-      # Passo 10: Upload de Logs (Opcional)
+      # Passo 11: Upload de Logs (Opcional)
       - name: Upload Logs
         uses: actions/upload-artifact@v3
         with:
