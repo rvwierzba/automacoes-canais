@@ -39,6 +39,12 @@ jobs:
           sudo bash -c 'echo "<policy domain=\"coder\" rights=\"read|write\" pattern=\"PNG32\" />" >> /etc/ImageMagick-6/policy.xml'
         shell: bash
 
+      # Passo 4.1: (Opcional) Verificar as Políticas do ImageMagick
+      # - name: Verify ImageMagick Policies
+      #   run: |
+      #     sudo grep -E 'PNG|PNG32' /etc/ImageMagick-6/policy.xml
+      #   shell: bash
+
       # Passo 5: Listar Versões do MoviePy (usando pip index versions)
       - name: List Available MoviePy Versions
         run: |
