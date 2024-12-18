@@ -49,8 +49,8 @@ jobs:
           POLICY_FILES=$(sudo find / -type f -name "policy.xml" 2>/dev/null)
           for POLICY_FILE in $POLICY_FILES; do
             echo "Verifying $POLICY_FILE"
-            grep -E 'PNG' "$POLICY_FILE" || echo "No policy found for PNG in $POLICY_FILE"
-            grep -E 'PNG32' "$POLICY_FILE" || echo "No policy found for PNG32 in $POLICY_FILE"
+            grep -E 'pattern="PNG"' "$POLICY_FILE" || echo "No policy found for PNG in $POLICY_FILE"
+            grep -E 'pattern="PNG32"' "$POLICY_FILE" || echo "No policy found for PNG32 in $POLICY_FILE"
           done
         shell: bash
 
