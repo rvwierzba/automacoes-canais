@@ -35,23 +35,28 @@ jobs:
       # Passo 4: Ajustar as Políticas de Segurança do ImageMagick para PNG e PNG32
       - name: Adjust ImageMagick Policies for PNG and PNG32
         run: |
-          POLICY_FILES=$(sudo find / -type f -name "policy.xml" 2>/dev/null)
-          for POLICY_FILE in $POLICY_FILES; do
-            echo "Adjusting $POLICY_FILE"
-            sudo bash -c 'echo "<policy domain=\"coder\" rights=\"read|write\" pattern=\"PNG\" />" >> '"$POLICY_FILE"
-            sudo bash -c 'echo "<policy domain=\"coder\" rights=\"read|write\" pattern=\"PNG32\" />" >> '"$POLICY_FILE"
-          done
+          POLICY_FILE="/etc/ImageMagick-6/policy.xml"
+          
+          # Fazer backup do arquivo policy.xml
+          sudo cp "$POLICY_FILE" "$POLICY_FILE.bak"
+          
+          # Remover políticas restritivas existentes para PNG e PNG32
+          sudo sed -i '/<policy domain="coder" rights="none" pattern="PNG" \/>/d' "$POLICY_FILE"
+          sudo sed -i '/<policy domain="coder" rights="none" pattern="PNG32" \/>/d' "$POLICY_FILE"
+          
+          # Adicionar políticas que permitem leitura e escrita para PNG e PNG32
+          echo '<policy domain="coder" rights="read|write" pattern="PNG" />' | sudo tee -a "$POLICY_FILE"
+          echo '<policy domain="coder" rights="read|write" pattern="PNG32" />' | sudo tee -a "$POLICY_FILE"
         shell: bash
 
       # Passo 5: Verificar as Políticas Ajustadas
       - name: Verify ImageMagick Policies
         run: |
-          POLICY_FILES=$(sudo find / -type f -name "policy.xml" 2>/dev/null)
-          for POLICY_FILE in $POLICY_FILES; do
-            echo "Verifying $POLICY_FILE"
-            grep -E 'pattern="PNG"' "$POLICY_FILE" || echo "No policy found for PNG in $POLICY_FILE"
-            grep -E 'pattern="PNG32"' "$POLICY_FILE" || echo "No policy found for PNG32 in $POLICY_FILE"
-          done
+          POLICY_FILE="/etc/ImageMagick-6/policy.xml"
+          
+          echo "Verificando políticas no arquivo $POLICY_FILE:"
+          grep -E 'pattern="PNG"' "$POLICY_FILE" || echo "Nenhuma política encontrada para PNG em $POLICY_FILE"
+          grep -E 'pattern="PNG32"' "$POLICY_FILE" || echo "Nenhuma política encontrada para PNG32 em $POLICY_FILE"
         shell: bash
 
       # Passo 6: Instalar Dependências Python
