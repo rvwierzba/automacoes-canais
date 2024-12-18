@@ -128,8 +128,8 @@ jobs:
             run_pipeline.log
             criar_video.log
             upload_youtube.log
-            upload_tiktok.log 
-            ```
+            upload_tiktok.log
+    ```
 
 ### **Passo 1.2: Validar a Sintaxe do YAML**
 
