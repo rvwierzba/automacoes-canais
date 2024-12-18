@@ -28,8 +28,7 @@ jobs:
       - name: Install ImageMagick 7 and Fonts
         run: |
           sudo apt-get update
-          sudo apt-get install -y imagemagick-7.q16
-          sudo apt-get install -y fonts-dejavu
+          sudo apt-get install -y imagemagick fonts-dejavu
           magick -version
         shell: bash
 
@@ -105,7 +104,7 @@ EOL
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV
           echo "YOUTUBE_API_KEY=${{ secrets.YOUTUBE_API_KEY }}" >> $GITHUB_ENV
           echo "YOUTUBE_CHANNEL_ID=${{ secrets.YOUTUBE_CHANNEL_ID }}" >> $GITHUB_ENV
-          
+
           # Configurar MoviePy para usar o ImageMagick 7 via 'magick'
           echo "IMAGEMAGICK_BINARY=magick" >> $GITHUB_ENV
         shell: bash
