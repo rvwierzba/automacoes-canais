@@ -142,26 +142,33 @@ jobs:
           echo "IMAGEMAGICK_BINARY=/usr/local/bin/magick" >> $GITHUB_ENV
         shell: bash
 
-      # Passo 14: Executar o Script Principal
+      # Passo 14: Listar Arquivos para Verificação
+      - name: List Files Before Running Script
+        run: |
+          echo "Arquivos no diretório atual:"
+          ls -la
+        shell: bash
+
+      # Passo 15: Executar o Script Principal
       - name: Run Main Script
         run: |
           python main.py
         shell: bash
 
-      # Passo 15: Listar Vídeos Gerados
+      # Passo 16: Listar Vídeos Gerados
       - name: List Generated Videos
         run: |
           ls -la generated_videos/
         shell: bash
 
-      # Passo 16: Upload dos Vídeos Gerados
+      # Passo 17: Upload dos Vídeos Gerados
       - name: Upload Generated Videos
         uses: actions/upload-artifact@v3
         with:
           name: generated_videos
           path: generated_videos/
 
-      # Passo 17: Upload de Logs (Opcional)
+      # Passo 18: Upload de Logs (Opcional)
       - name: Upload Logs
         uses: actions/upload-artifact@v3
         with:
@@ -173,7 +180,7 @@ jobs:
             upload_youtube.log
             upload_tiktok.log
 
-      # Passo 18: Listar Políticas Ativas do ImageMagick 7 (Para Depuração)
+      # Passo 19: Listar Políticas Ativas do ImageMagick 7 (Para Depuração)
       - name: List Active ImageMagick 7 Policies
         run: |
           magick -list policy
