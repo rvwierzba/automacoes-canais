@@ -34,7 +34,7 @@ jobs:
       - name: Install ImageMagick 7 and Fonts
         run: |
           sudo apt-get update
-          sudo apt-get install -y imagemagick-7.q16 fonts-dejavu
+          sudo apt-get install -y imagemagick fonts-dejavu
           magick -version
         shell: bash
 
@@ -58,11 +58,8 @@ jobs:
           sudo sed -i '/<policy domain="coder" rights="none" pattern="PNG" \/>/d' "$POLICY_FILE"
           sudo sed -i '/<policy domain="coder" rights="none" pattern="PNG32" \/>/d' "$POLICY_FILE"
           # Adicionar políticas que permitem leitura e escrita para PNG e PNG32
-          sudo tee -a "$POLICY_FILE" > /dev/null <<EOL
-<policy domain="coder" rights="read|write" pattern="PNG" />
-<policy domain="coder" rights="read|write" pattern="PNG32" />
-EOL
-
+          echo '<policy domain="coder" rights="read|write" pattern="PNG" />' | sudo tee -a "$POLICY_FILE"
+          echo '<policy domain="coder" rights="read|write" pattern="PNG32" />' | sudo tee -a "$POLICY_FILE"
           echo "Políticas ajustadas em $POLICY_FILE."
         shell: bash
 
