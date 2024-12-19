@@ -57,10 +57,10 @@ def main():
         # Combinar os clipes
         video = CompositeVideoClip([fundo, texto])
 
-        # Salvar o vídeo
+        # Salvar o vídeo com fps=24
         video_path = f"generated_videos/{tema.replace(' ', '_')}.mp4"
         os.makedirs(os.path.dirname(video_path), exist_ok=True)
-        video.write_videofile(video_path, codec='libx264', audio=False)
+        video.write_videofile(video_path, codec='libx264', audio=False, fps=24)
         logging.info(f"Vídeo criado em: {video_path}")
 
     except Exception as e:
