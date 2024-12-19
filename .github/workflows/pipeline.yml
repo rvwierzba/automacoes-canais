@@ -142,7 +142,7 @@ jobs:
           echo "IMAGEMAGICK_BINARY=/usr/local/bin/magick" >> $GITHUB_ENV
         shell: bash
 
-      # Passo 14: Listar Arquivos para Verificação
+      # Passo 14: Listar Arquivos Antes de Executar o Script
       - name: List Files Before Running Script
         run: |
           echo "Arquivos no diretório atual:"
