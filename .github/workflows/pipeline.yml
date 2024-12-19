@@ -42,8 +42,8 @@ jobs:
       - name: Download and Install ImageMagick 7
         run: |
           cd /tmp
-          IM_VERSION=7.1.1-13
-          wget https://download.imagemagick.org/ImageMagick/download/releases/ImageMagick-${IM_VERSION}.tar.gz
+          IM_VERSION=7.1.1-41
+          wget https://github.com/ImageMagick/ImageMagick/archive/refs/tags/${IM_VERSION}.tar.gz -O ImageMagick-${IM_VERSION}.tar.gz
           tar xvzf ImageMagick-${IM_VERSION}.tar.gz
           cd ImageMagick-${IM_VERSION}
           ./configure --prefix=/usr/local --enable-shared
@@ -145,4 +145,3 @@ jobs:
         run: |
           magick -list policy
         shell: bash
-
