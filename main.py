@@ -1,71 +1,135 @@
-# main.py
+name: Pipeline de Automação de Vídeos
 
-import os
-import sys
-import logging
-from moviepy.config import change_settings
-from moviepy.editor import TextClip, CompositeVideoClip, ColorClip
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5 * * *'  # Executa todos os dias às 05:00 UTC (~2h da manhã no Brasil)
+    - cron: '0 19 * * *' # Executa todos os dias às 19:00 UTC (~16h da tarde no Brasil)
 
-def configurar_logging():
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler('main.log', mode='a', encoding='utf-8')
-        ]
-    )
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-def main():
-    configurar_logging()
-    logging.info("Iniciando pipeline completo...")
+    steps:
+      # Passo 1: Checkout do Código
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    # Obter variáveis de ambiente
-    gemini_api_key = os.getenv('GEMINI_API_KEY')
-    youtube_api_key = os.getenv('YOUTUBE_API_KEY')
-    youtube_channel_id = os.getenv('YOUTUBE_CHANNEL_ID')
-    imagemagick_binary = os.getenv('IMAGEMAGICK_BINARY')
+      # Passo 2: Configurar Python
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
-    logging.info(f"GEMINI_API_KEY: {'***' if gemini_api_key else 'Não definida'}")
-    logging.info(f"YOUTUBE_API_KEY: {'***' if youtube_api_key else 'Não definida'}")
-    logging.info(f"YOUTUBE_CHANNEL_ID: {'***' if youtube_channel_id else 'Não definida'}")
-    logging.info(f"IMAGEMAGICK_BINARY: {imagemagick_binary}")
+      # Passo 3: Remover ImageMagick 6 se instalado
+      - name: Remove ImageMagick 6
+        run: |
+          sudo apt-get remove -y imagemagick
+        shell: bash
 
-    # Verificar se todas as variáveis estão definidas
-    if not all([gemini_api_key, youtube_api_key, youtube_channel_id, imagemagick_binary]):
-        logging.error("Uma ou mais variáveis de ambiente necessárias não estão definidas.")
-        sys.exit(1)
+      # Passo 4: Adicionar PPA e Instalar ImageMagick 7 e Fonts DejaVu
+      - name: Add PPA and Install ImageMagick 7
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository ppa:ubuntuhandbook1/imagemagick7 -y
+          sudo apt-get update
+          sudo apt-get install -y imagemagick fonts-dejavu
+          magick -version
+        shell: bash
 
-    # Configurar MoviePy para usar o ImageMagick 7 via 'magick'
-    change_settings({"IMAGEMAGICK_BINARY": imagemagick_binary})
+      # Passo 5: Ajustar as Políticas de Segurança do ImageMagick 7 para PNG e PNG32
+      - name: Adjust ImageMagick 7 Policies for PNG and PNG32
+        run: |
+          POLICY_FILE="/etc/ImageMagick-7/policy.xml"
+          if [ ! -f "$POLICY_FILE" ]; then
+            echo "Arquivo policy.xml não encontrado em $POLICY_FILE."
+            exit 1
+          fi
+          # Fazer backup do arquivo policy.xml
+          sudo cp "$POLICY_FILE" "${POLICY_FILE}.bak"
+          # Remover políticas restritivas existentes para PNG e PNG32
+          sudo sed -i '/<policy domain="coder" rights="none" pattern="PNG" \/>/d' "$POLICY_FILE"
+          sudo sed -i '/<policy domain="coder" rights="none" pattern="PNG32" \/>/d' "$POLICY_FILE"
+          # Adicionar políticas que permitem leitura e escrita para PNG e PNG32
+          echo '<policy domain="coder" rights="read|write" pattern="PNG" />' | sudo tee -a "$POLICY_FILE"
+          echo '<policy domain="coder" rights="read|write" pattern="PNG32" />' | sudo tee -a "$POLICY_FILE"
+          echo "Políticas ajustadas em $POLICY_FILE."
+        shell: bash
 
-    # Gerar temas (exemplo simplificado)
-    temas = ["Tecnologia", "Saúde", "Educação"]
-    logging.info(f"Temas gerados: {temas}")
+      # Passo 6: Verificar as Políticas Ajustadas
+      - name: Verify ImageMagick 7 Policies
+        run: |
+          POLICY_FILE="/etc/ImageMagick-7/policy.xml"
 
-    # Criar vídeo para o primeiro tema
-    tema = temas[0]
-    logging.info(f"Criando vídeo para o tema: {tema}")
+          echo "Verificando políticas no arquivo $POLICY_FILE:"
+          grep '<policy domain="coder" rights="read|write" pattern="PNG" />' "$POLICY_FILE" && echo "Política para PNG encontrada."
+          grep '<policy domain="coder" rights="read|write" pattern="PNG32" />' "$POLICY_FILE" && echo "Política para PNG32 encontrada."
+          echo ""
+        shell: bash
 
-    try:
-        # Criar um clipe de fundo
-        fundo = ColorClip(size=(1280, 720), color=(0, 0, 0), duration=10)  # Fundo preto de 10 segundos
+      # Passo 7: Testar ImageMagick 7 com PNG32
+      - name: Test ImageMagick 7 with PNG32
+        run: |
+          # Criar uma imagem PNG32 de teste
+          magick -size 100x100 xc:transparent PNG32:test_png32.png
 
-        # Criar um clipe de texto
-        texto = TextClip(tema, fontsize=70, color='white').set_position('center').set_duration(10)
+          # Verificar se a imagem foi criada com sucesso
+          if [[ -f "test_png32.png" ]]; then
+            echo "PNG32 image created successfully."
+          else
+            echo "Failed to create PNG32 image."
+            exit 1
+          fi
+        shell: bash
 
-        # Combinar os clipes
-        video = CompositeVideoClip([fundo, texto])
+      # Passo 8: Instalar Dependências Python
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+        shell: bash
 
-        # Salvar o vídeo
-        video_path = f"generated_videos/{tema.replace(' ', '_')}.mp4"
-        os.makedirs(os.path.dirname(video_path), exist_ok=True)
-        video.write_videofile(video_path, codec='libx264', audio=False)
-        logging.info(f"Vídeo criado em: {video_path}")
+      # Passo 9: Decodificar e Criar `client_secret.json` e `token.json`
+      - name: Decode Secrets and Create JSON Files
+        run: |
+          echo "${{ secrets.CLIENT_SECRET_JSON }}" | base64 --decode > client_secret.json
+          echo "${{ secrets.YOUTUBE_TOKEN_JSON }}" | base64 --decode > token.json
+        shell: bash
 
-    except Exception as e:
-        logging.error(f"Erro ao criar vídeo: {e}")
-        sys.exit(1)
+      # Passo 10: Exportar Variáveis de Ambiente e Configurar MoviePy
+      - name: Export Environment Variables and Configure MoviePy
+        run: |
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV
+          echo "YOUTUBE_API_KEY=${{ secrets.YOUTUBE_API_KEY }}" >> $GITHUB_ENV
+          echo "YOUTUBE_CHANNEL_ID=${{ secrets.YOUTUBE_CHANNEL_ID }}" >> $GITHUB_ENV
+          # Configurar MoviePy para usar o ImageMagick 7 via 'magick'
+          echo "IMAGEMAGICK_BINARY=magick" >> $GITHUB_ENV
+        shell: bash
 
-if __name__ == "__main__":
-    main()
+      # Passo 11: Executar o Script Principal
+      - name: Run Main Script
+        run: |
+          python main.py
+        shell: bash
+
+      # Passo 12: Upload de Logs (Opcional)
+      - name: Upload Logs
+        uses: actions/upload-artifact@v3
+        with:
+          name: logs
+          path: |
+            main.log
+            run_pipeline.log
+            criar_video.log
+            upload_youtube.log
+            upload_tiktok.log
+
+      # Passo 13: Listar Políticas Ativas do ImageMagick 7 (Para Depuração)
+      - name: List Active ImageMagick 7 Policies
+        run: |
+          magick -list policy
+        shell: bash
