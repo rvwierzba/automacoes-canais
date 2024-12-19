@@ -3,6 +3,7 @@
 import os
 import sys
 import logging
+from moviepy.config import change_settings
 from moviepy.editor import TextClip, CompositeVideoClip, ColorClip
 
 def configurar_logging():
@@ -34,6 +35,9 @@ def main():
     if not all([gemini_api_key, youtube_api_key, youtube_channel_id, imagemagick_binary]):
         logging.error("Uma ou mais variáveis de ambiente necessárias não estão definidas.")
         sys.exit(1)
+
+    # Configurar MoviePy para usar o ImageMagick 7 via 'magick'
+    change_settings({"IMAGEMAGICK_BINARY": imagemagick_binary})
 
     # Gerar temas (exemplo simplificado)
     temas = ["Tecnologia", "Saúde", "Educação"]
