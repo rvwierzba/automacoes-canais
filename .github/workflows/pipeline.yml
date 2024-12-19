@@ -35,7 +35,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential checkinstall
-          sudo apt-get install -y libjpeg-dev libpng-dev libtiff-dev libgif-dev libx11-dev libxml2-dev libfreetype6-dev liblcms2-dev libopenjp2-7-dev libheic-dev libwebp-dev
+          sudo apt-get install -y libjpeg-dev libpng-dev libtiff-dev libgif-dev libx11-dev libxml2-dev libfreetype6-dev liblcms2-dev libopenjp2-7-dev libheif-dev libwebp-dev
         shell: bash
 
       # Passo 5: Baixar e Compilar ImageMagick 7
