@@ -5,8 +5,8 @@ import sys
 import logging
 from moviepy.config import change_settings
 from moviepy.editor import TextClip, CompositeVideoClip, ColorClip
-from upload_youtube import upload_video_to_youtube
-from upload_tiktok import upload_video_to_tiktok
+from scripts.upload_youtube import upload_video_to_youtube
+from scripts.upload_tiktok import upload_video_to_tiktok
 
 def configurar_logging():
     logging.basicConfig(
