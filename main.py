@@ -51,8 +51,8 @@ def main():
         # Criar um clipe de fundo
         fundo = ColorClip(size=(1280, 720), color=(0, 0, 0), duration=10)  # Fundo preto de 10 segundos
 
-        # Criar um clipe de texto
-        texto = TextClip(tema, fontsize=70, color='white').set_position('center').set_duration(10)
+        # Criar um clipe de texto com uma fonte específica
+        texto = TextClip(tema, fontsize=70, color='white', font='DejaVu-Sans').set_position('center').set_duration(10)
 
         # Combinar os clipes
         video = CompositeVideoClip([fundo, texto])
